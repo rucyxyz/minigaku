@@ -1,93 +1,6 @@
 const app = document.getElementById("app");
 const pageTitle = document.getElementById("page-title");
 
-/* =========================================================================
-   1. 学習データ（小1〜高3の全単元）
-   ========================================================================= */
-const CURRICULUM = {
-  "小学生": {
-    "算数": {
-      "小1": [
-        { title: "10までのかず", questions: [
-          { q: "「7」は「5」よりいくつ大きい？", opts: ["1", "2", "3", "4"], a: 1, exp: "7 - 5 = 2 です。" },
-          { q: "「4 + 4」はいくつ？", opts: ["6", "7", "8", "9"], a: 2, exp: "4 + 4 = 8 です。" },
-          { q: "「9 - 3」はいくつ？", opts: ["5", "6", "7", "8"], a: 1, exp: "9 - 3 = 6 です。" },
-          { q: "「2 + 7」はいくつ？", opts: ["8", "9", "10", "11"], a: 1, exp: "2 + 7 = 9 です。" },
-          { q: "「5 - 5」はいくつ？", opts: ["0", "1", "2", "5"], a: 0, exp: "5 - 5 = 0 です。" },
-          { q: "「10 - 5」はいくつ？", opts: ["4", "5", "6", "7"], a: 1, exp: "10 - 5 = 5 です。" },
-          { q: "「3 + 6」はいくつ？", opts: ["8", "9", "10", "11"], a: 1, exp: "3 + 6 = 9 です。" },
-          { q: "「8 - 4」はいくつ？", opts: ["3", "4", "5", "6"], a: 1, exp: "8 - 4 = 4 です。" },
-          { q: "「1 + 1」はいくつ？", opts: ["1", "2", "3", "4"], a: 1, exp: "1 + 1 = 2 です。" },
-          { q: "「10 - 1」はいくつ？", opts: ["8", "9", "10", "11"], a: 1, exp: "10 - 1 = 9 です。" }
-        ]},
-        { title: "いくつといくつ", questions: [
-          { q: "5は2とあといくつ？", opts: ["2", "3", "4", "5"], a: 1, exp: "5は2と3に分けられます。" },
-          { q: "10は4とあといくつ？", opts: ["5", "6", "7", "8"], a: 1, exp: "10は4と6に分けられます。" },
-          { q: "6は1とあといくつ？", opts: ["4", "5", "6", "7"], a: 1, exp: "6は1と5に分けられます。" },
-          { q: "7は3とあといくつ？", opts: ["3", "4", "5", "6"], a: 1, exp: "7は3と4に分けられます。" },
-          { q: "8は5とあといくつ？", opts: ["2", "3", "4", "5"], a: 1, exp: "8は5と3に分けられます。" },
-          { q: "9は4とあといくつ？", opts: ["4", "5", "6", "7"], a: 1, exp: "9は4と5に分けられます。" },
-          { q: "3は1とあといくつ？", opts: ["1", "2", "3", "4"], a: 1, exp: "3は1と2に分けられます。" },
-          { q: "4は2とあといくつ？", opts: ["1", "2", "3", "4"], a: 1, exp: "4は2と2に分けられます。" },
-          { q: "10は7とあといくつ？", opts: ["2", "3", "4", "5"], a: 1, exp: "10は7と3に分けられます。" },
-          { q: "2は1とあといくつ？", opts: ["0", "1", "2", "3"], a: 1, exp: "2は1と1に分けられます。" }
-        ]}
-      ],
-      "小2": [
-        { title: "かけ算", questions: [
-          { q: "2 × 3 は？", opts: ["4", "5", "6", "7"], a: 2, exp: "2×3=6です。" },
-          { q: "4 × 2 は？", opts: ["6", "7", "8", "9"], a: 2, exp: "4×2=8です。" },
-          { q: "3 × 3 は？", opts: ["6", "7", "8", "9"], a: 3, exp: "3×3=9です。" },
-          { q: "5 × 2 は？", opts: ["8", "9", "10", "11"], a: 2, exp: "5×2=10です。" },
-          { q: "6 × 2 は？", opts: ["10", "11", "12", "13"], a: 2, exp: "6×2=12です。" },
-          { q: "7 × 2 は？", opts: ["12", "13", "14", "15"], a: 2, exp: "7×2=14です。" },
-          { q: "8 × 2 は？", opts: ["14", "15", "16", "17"], a: 2, exp: "8×2=16です。" },
-          { q: "9 × 2 は？", opts: ["16", "17", "18", "19"], a: 2, exp: "9×2=18です。" },
-          { q: "2 × 2 は？", opts: ["2", "3", "4", "5"], a: 2, exp: "2×2=4です。" },
-          { q: "1 × 2 は？", opts: ["1", "2", "3", "4"], a: 1, exp: "1×2=2です。" }
-        ]}
-      ]
-    },
-    "漢字": {
-      "小1": [
-        { title: "ひらがなの読み書き", questions: [
-          { q: "「あ」の読み方は？", opts: ["あ", "い", "う", "え"], a: 0, exp: "「あ」です。" },
-          { q: "「か」の読み方は？", opts: ["か", "き", "く", "け"], a: 0, exp: "「か」です。" },
-          { q: "「さ」の読み方は？", opts: ["さ", "し", "す", "せ"], a: 0, exp: "「さ」です。" },
-          { q: "「た」の読み方は？", opts: ["た", "ち", "つ", "て"], a: 0, exp: "「た」です。" },
-          { q: "「な」の読み方は？", opts: ["な", "に", "ぬ", "ね"], a: 0, exp: "「な」です。" },
-          { q: "「は」の読み方は？", opts: ["は", "ひ", "ふ", "へ"], a: 0, exp: "「は」です。" },
-          { q: "「ま」の読み方は？", opts: ["ま", "み", "む", "め"], a: 0, exp: "「ま」です。" },
-          { q: "「や」の読み方は？", opts: ["や", "ゆ", "よ", "わ"], a: 0, exp: "「や」です。" },
-          { q: "「ら」の読み方は？", opts: ["ら", "り", "る", "れ"], a: 0, exp: "「ら」です。" },
-          { q: "「ん」の読み方は？", opts: ["ん", "あ", "い", "う"], a: 0, exp: "「ん」です。" }
-        ]}
-      ]
-    }
-  },
-  "中学生": {
-    "数学": {
-      "中1": [
-        { title: "正負の数", questions: [
-          { q: "-3 + 5 は？", opts: ["-8", "-2", "2", "8"], a: 2, exp: "2になります。" },
-          { q: "(-2) × 3 は？", opts: ["-6", "-5", "5", "6"], a: 0, exp: "-6になります。" },
-          { q: "-4 - (-2) は？", opts: ["-6", "-2", "2", "6"], a: 1, exp: "-2になります。" },
-          { q: "(-5) × (-2) は？", opts: ["-10", "-7", "7", "10"], a: 3, exp: "10になります。" },
-          { q: "-8 + 3 は？", opts: ["-11", "-5", "5", "11"], a: 1, exp: "-5になります。" },
-          { q: "0 - 5 は？", opts: ["-5", "0", "5", "10"], a: 0, exp: "-5になります。" },
-          { q: "-6 ÷ 2 は？", opts: ["-3", "-4", "3", "4"], a: 0, exp: "-3になります。" },
-          { q: "-12 ÷ (-4) は？", opts: ["-3", "-4", "3", "4"], a: 2, exp: "3になります。" },
-          { q: "-1 + 1 は？", opts: ["-2", "-1", "0", "1"], a: 2, exp: "0になります。" },
-          { q: "(-3) × (-3) は？", opts: ["-9", "-6", "6", "9"], a: 3, exp: "9になります。" }
-        ]}
-      ]
-    }
-  }
-};
-
-/* =========================================================================
-   2. ストレージ・共通機能
-   ========================================================================= */
 const KEYS = { THEME:"sf.theme", PROGRESS:"sf.progress", SESSIONS:"sf.sessions", USER:"sf.user", USERS:"sf.users", TODOS:"sf.todos", LAST_QUIZ:"sf.last_quiz" };
 function load(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
@@ -184,9 +97,6 @@ function getRankBadge() {
   return "";
 }
 
-/* =========================================================================
-   3. ナビゲーションとルーティング
-   ========================================================================= */
 function renderNav(activeId) {
   const NAV = [
     { id:"home", label:"ホーム", icon:'<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>' },
@@ -225,33 +135,16 @@ document.getElementById("menu-btn").onclick = () => document.getElementById("sid
 window.navigateTo = (pageId) => {
   document.getElementById("sidebar").classList.remove("open");
   window.scrollTo(0,0);
-  if (pageId === "home") {
-    renderNav("home");
-    pageTitle.textContent = "ホーム";
-    window.renderHomePage();
-  } else if (pageId === "learn") {
-    renderNav("learn");
-    pageTitle.textContent = "学習";
-    window.renderLearnIndex();
-  } else if (pageId === "record") {
-    renderNav("record");
-    pageTitle.textContent = "記録";
-    window.renderRecordPage();
-  } else if (pageId === "profile") {
-    renderNav("");
-    pageTitle.textContent = "プロフィール";
-    window.renderProfilePage();
-  }
+  if (pageId === "home") { renderNav("home"); pageTitle.textContent = "ホーム"; window.renderHomePage(); }
+  else if (pageId === "learn") { renderNav("learn"); pageTitle.textContent = "学習"; window.renderLearnIndex(); }
+  else if (pageId === "record") { renderNav("record"); pageTitle.textContent = "記録"; window.renderRecordPage(); }
+  else if (pageId === "profile") { renderNav(""); pageTitle.textContent = "プロフィール"; window.renderProfilePage(); }
 };
 
-/* =========================================================================
-   4. ホーム画面
-   ========================================================================= */
 window.renderHomePage = () => {
   const tMin = todayMinutes();
   const s = streak();
   const p = getProgress();
-  
   let totalUnits = 0;
   for (const stage of Object.values(CURRICULUM)) {
     for (const subject of Object.values(stage)) {
@@ -329,9 +222,7 @@ window.addTodo = () => {
 };
 window.toggleTodo = (i) => { const todos = load(KEYS.TODOS, []); todos[i].done = !todos[i].done; save(KEYS.TODOS, todos); window.renderHomePage(); };
 window.deleteTodo = (i) => { const todos = load(KEYS.TODOS, []); todos.splice(i, 1); save(KEYS.TODOS, todos); window.renderHomePage(); };
-/* =========================================================================
-   5. 学習画面（教科・単元・クイズ）
-   ========================================================================= */
+
 window.renderLearnIndex = () => {
   let html = `<div class="eboard-header">教科の一覧</div><div class="eboard-columns">`;
   for (const [stage, subjects] of Object.entries(CURRICULUM)) {
@@ -536,9 +427,6 @@ window.renderQuizPage = (unitTitle, stage, subject, grade, unitIndex) => {
   draw();
 };
 
-/* =========================================================================
-   6. メモ機能
-   ========================================================================= */
 let canvas, ctx, isDrawing = false, currentTool = 'pen';
 let strokes = [], currentStroke = [], redoStack = [];
 
@@ -612,9 +500,6 @@ function redrawCanvas() {
   });
 }
 
-/* =========================================================================
-   7. 記録画面
-   ========================================================================= */
 window.renderRecordPage = () => {
   const sessions = getSessions();
   const tMin = todayMinutes();
@@ -713,13 +598,17 @@ window.renderRecordPage = () => {
   };
 };
 
-/* =========================================================================
-   8. プロフィール・アカウント
-   ========================================================================= */
 window.renderProfilePage = () => {
   const user = getCurrentUser();
   if (!user) {
-    app.innerHTML = `<h1>プロフィール</h1><p class="page-desc">アカウントを登録すると、プロフィールを設定できます。</p><div style="display:flex; gap:16px;"><button class="btn btn-primary" onclick="openRegister()">会員登録</button><button class="btn" onclick="openLogin()">ログイン</button></div>`;
+    app.innerHTML = `
+      <h1>プロフィール</h1>
+      <p class="page-desc">アカウントを登録すると、プロフィールを設定できます。</p>
+      <div style="display:flex; gap:16px;">
+        <button class="btn btn-primary" onclick="openRegister()">会員登録</button>
+        <button class="btn" onclick="openLogin()">ログイン</button>
+      </div>
+    `;
     return;
   }
   const users = getUsers();
@@ -732,11 +621,23 @@ window.renderProfilePage = () => {
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:32px; max-width:560px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
       <div class="profile-header">
         <div class="profile-avatar">${av}</div>
-        <div><div style="font-size:24px; font-weight:700; margin-bottom:4px;">${esc(user.name)}</div><div class="muted" style="font-size:14px;">${esc(user.email)}</div></div>
+        <div>
+          <div style="font-size:24px; font-weight:700; margin-bottom:4px;">${esc(user.name)}</div>
+          <div class="muted" style="font-size:14px;">${esc(user.email)}</div>
+        </div>
       </div>
-      <div class="form-group"><label>ユーザー名</label><input type="text" id="pf-name" value="${esc(user.name)}" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:15px; background:var(--bg); color:var(--text);"></div>
-      <div class="form-group" style="margin-top:20px;"><label>自己紹介</label><textarea id="pf-bio" rows="4" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:15px; background:var(--bg); color:var(--text); resize:vertical;">${esc(bio)}</textarea></div>
-      <div style="display:flex; gap:16px; margin-top:32px;"><button class="btn btn-primary" style="flex:1;" onclick="window.saveProfile()">保存</button><button class="btn" style="flex:1;" onclick="window.doLogout()">ログアウト</button></div>
+      <div class="form-group">
+        <label>ユーザー名</label>
+        <input type="text" id="pf-name" value="${esc(user.name)}" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:15px; background:var(--bg); color:var(--text);">
+      </div>
+      <div class="form-group" style="margin-top:20px;">
+        <label>自己紹介</label>
+        <textarea id="pf-bio" rows="4" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:15px; background:var(--bg); color:var(--text); resize:vertical;">${esc(bio)}</textarea>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:32px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="window.saveProfile()">保存</button>
+        <button class="btn" style="flex:1;" onclick="window.doLogout()">ログアウト</button>
+      </div>
     </div>
   `;
 
@@ -744,7 +645,10 @@ window.renderProfilePage = () => {
     const name = document.getElementById("pf-name").value.trim();
     const bio = document.getElementById("pf-bio").value.trim();
     if (!name) { alert("名前を入力してください"); return; }
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(name)) { alert("ユーザー名は英数字とアンダーバー(_)のみ、3文字以上20文字以内で入力してください。"); return; }
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(name)) {
+      alert("ユーザー名は英数字とアンダーバー(_)のみ、3文字以上20文字以内で入力してください。");
+      return;
+    }
     updateProfile(name, bio);
     renderAuthButtons();
     alert("プロフィールを更新しました。");
@@ -762,7 +666,10 @@ window.openLogin = () => {
     <h3 style="margin-bottom:24px; font-size:20px; font-weight:700;">ログイン</h3>
     <div class="form-group" style="margin-bottom:20px;"><label style="display:block; font-size:14px; font-weight:600; margin-bottom:8px; color:var(--text-muted);">メールアドレス</label><input type="email" id="lg-email" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:15px; background:var(--bg); color:var(--text);"></div>
     <div class="form-group" style="margin-bottom:24px;"><label style="display:block; font-size:14px; font-weight:600; margin-bottom:8px; color:var(--text-muted);">パスワード</label><input type="password" id="lg-pass" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:15px; background:var(--bg); color:var(--text);"></div>
-    <div style="display:flex; gap:12px; justify-content:flex-end;"><button class="btn" onclick="window.closeModal()">キャンセル</button><button class="btn btn-primary" onclick="window.doLogin()">ログイン</button></div>
+    <div style="display:flex; gap:12px; justify-content:flex-end;">
+      <button class="btn" onclick="window.closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="window.doLogin()">ログイン</button>
+    </div>
   `);
   window.doLogin = () => {
     const email = document.getElementById("lg-email").value.trim();
@@ -781,15 +688,22 @@ window.openRegister = () => {
     <div class="form-group" style="margin-bottom:20px;"><label style="display:block; font-size:14px; font-weight:600; margin-bottom:8px; color:var(--text-muted);">メールアドレス</label><input type="email" id="rg-email" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:15px; background:var(--bg); color:var(--text);"></div>
     <div class="form-group" style="margin-bottom:20px;"><label style="display:block; font-size:14px; font-weight:600; margin-bottom:8px; color:var(--text-muted);">パスワード</label><input type="password" id="rg-pass" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:15px; background:var(--bg); color:var(--text);"></div>
     <div class="form-group" style="margin-bottom:24px;"><label style="display:block; font-size:14px; font-weight:600; margin-bottom:8px; color:var(--text-muted);">パスワード（確認）</label><input type="password" id="rg-pass-confirm" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:15px; background:var(--bg); color:var(--text);"></div>
-    <div style="display:flex; gap:12px; justify-content:flex-end;"><button class="btn" onclick="window.closeModal()">キャンセル</button><button class="btn btn-primary" onclick="window.doRegister()">登録</button></div>
+    <div style="display:flex; gap:12px; justify-content:flex-end;">
+      <button class="btn" onclick="window.closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="window.doRegister()">登録</button>
+    </div>
   `);
   window.doRegister = () => {
     const name = document.getElementById("rg-name").value.trim();
     const email = document.getElementById("rg-email").value.trim();
     const pass = document.getElementById("rg-pass").value;
     const passConfirm = document.getElementById("rg-pass-confirm").value;
+    
     if (!name || !email || !pass || !passConfirm) { alert("全ての項目を入力してください。"); return; }
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(name)) { alert("ユーザー名は英数字とアンダーバー(_)のみ、3文字以上20文字以内で入力してください。"); return; }
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(name)) {
+      alert("ユーザー名は英数字とアンダーバー(_)のみ、3文字以上20文字以内で入力してください。");
+      return;
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert("メールアドレスの形式が正しくありません。"); return; }
     if (pass.length < 6) { alert("パスワードは6文字以上にしてください。"); return; }
     if (pass !== passConfirm) { alert("パスワードが一致しません。"); return; }
@@ -800,20 +714,26 @@ window.openRegister = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let code = "";
     for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+    
     alert(`【メールアドレス認証】\nあなたのメールアドレス (${email}) に確認コードを送信しました。\n\n確認コード: ${code}`);
     
     showModal(`
       <h3 style="margin-bottom:24px; font-size:20px; font-weight:700;">メールアドレス認証</h3>
       <p class="muted" style="font-size:14px; margin-bottom:20px; text-align:center;">6桁の英数字を入力してください。</p>
       <div class="form-group" style="margin-bottom:24px;"><input type="text" id="verify-code" placeholder="XXXXXX" style="width:100%; padding:16px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:24px; text-align:center; letter-spacing:8px; background:var(--bg); color:var(--text);"></div>
-      <div style="display:flex; justify-content:center;"><button class="btn btn-primary" onclick="window.doVerify('${code}')" style="width:100%;">認証する</button></div>
+      <div style="display:flex; justify-content:center;">
+        <button class="btn btn-primary" onclick="window.doVerify('${code}')" style="width:100%;">認証する</button>
+      </div>
     `);
     
     window.doVerify = (expectedCode) => {
       const input = document.getElementById("verify-code").value.trim();
       if (input.toUpperCase() === expectedCode) {
         alert("認証が完了しました！");
-        window.closeModal(); renderAuthButtons(); renderSidebarFooter(); window.navigateTo("home");
+        window.closeModal();
+        renderAuthButtons();
+        renderSidebarFooter();
+        window.navigateTo("home");
       } else {
         alert("認証コードが違います。");
       }
@@ -834,11 +754,11 @@ function showModal(innerHtml) {
   document.getElementById("modal-content").innerHTML = innerHtml;
   overlay.classList.add("open");
 }
-window.closeModal = () => { const overlay = document.getElementById("modal-overlay"); if (overlay) overlay.classList.remove("open"); };
+window.closeModal = () => {
+  const overlay = document.getElementById("modal-overlay");
+  if (overlay) overlay.classList.remove("open");
+};
 
-/* =========================================================================
-   9. 初期化
-   ========================================================================= */
 renderAuthButtons();
 renderSidebarFooter();
 window.navigateTo("home");
