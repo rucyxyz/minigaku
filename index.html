@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ミニ学 | 興味ある分野だけ5分で</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-disabled: #d1d5db;
+    --secondary: #f3f4f6;
+    --secondary-hover: #e5e7eb;
+    --ok: #22c55e;
+    --ok-bg: #f0fdf4;
+    --ng: #ef4444;
+    --ng-bg: #fef2f2;
+    --ok-text: #16a34a;
+    --ng-text: #dc2626;
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    --card-shadow-hover: 0 6px 16px rgba(0,0,0,0.08);
+    --dot-inactive: #e5e7eb;
+    --field-money: #fffbeb;
+    --field-money-border: #fde68a;
+    --field-psych: #faf5ff;
+    --field-psych-border: #e9d5ff;
+    --field-math: #eff6ff;
+    --field-math-border: #bfdbfe;
+  }
+  html[data-theme="dark"] {
+    --bg: #0f1115;
+    --surface: #1a1d24;
+    --text: #e6e8eb;
+    --text-muted: #9aa3af;
+    --border: #2a2f38;
+    --primary: #3b82f6;
+    --primary-hover: #60a5fa;
+    --primary-disabled: #374151;
+    --secondary: #2a2f38;
+    --secondary-hover: #353b46;
+    --ok: #22c55e;
+    --ok-bg: #0f2a1a;
+    --ng: #ef4444;
+    --ng-bg: #2a1212;
+    --ok-text: #4ade80;
+    --ng-text: #f87171;
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    --card-shadow-hover: 0 6px 16px rgba(0,0,0,0.5);
+    --dot-inactive: #374151;
+    --field-money: #2a2410;
+    --field-money-border: #4a3b15;
+    --field-psych: #241a2a;
+    --field-psych-border: #3b2a4a;
+    --field-math: #101a2a;
+    --field-math-border: #1e3050;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    transition: background 0.2s, color 0.2s;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  header .logo {
+    font-weight: 800;
+    font-size: 20px;
+    text-decoration: none;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+  header .right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header .streak {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  header .streak strong { color: #f59e0b; font-size: 15px; }
+  .theme-btn {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .theme-btn:hover { background: var(--secondary); }
+
+  main {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 28px 16px 80px;
+  }
+  @media (min-width: 768px) {
+    main { padding: 40px 24px 100px; }
+  }
+  h1.page-title { font-size: 24px; margin-bottom: 4px; line-height: 1.3; }
+  @media (min-width: 768px) { h1.page-title { font-size: 28px; } }
+  p.page-desc { color: var(--text-muted); margin-bottom: 24px; font-size: 14px; }
+  .back-link {
+    display: inline-block;
+    color: var(--text-muted);
+    font-size: 14px;
+    text-decoration: none;
+    margin-bottom: 16px;
+    padding: 6px 0;
+  }
+  .back-link:hover { text-decoration: underline; }
+
+  .fields-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 600px) { .fields-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } }
+  @media (min-width: 900px) { .fields-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
+
+  .field-card {
+    display: block;
+    padding: 20px 18px;
+    border-radius: 16px;
+    text-decoration: none;
+    color: var(--text);
+    border: 2px solid var(--border);
+    background: var(--surface);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .field-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
+  .field-card .emoji { font-size: 32px; margin-bottom: 6px; }
+  .field-card h2 { font-size: 18px; margin-bottom: 4px; }
+  .field-card p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  .topic-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .topic-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: var(--card-shadow);
+    transition: box-shadow 0.15s;
+    text-decoration: none;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .topic-item:hover { box-shadow: var(--card-shadow-hover); }
+  .topic-item .num {
+    color: var(--text-muted); font-size: 12px; min-width: 24px;
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--secondary); flex-shrink: 0;
+  }
+  .topic-item .info { flex: 1; min-width: 0; }
+  .topic-item .info .title { font-weight: 600; margin-bottom: 2px; font-size: 15px; }
+  .topic-item .info .summary { font-size: 12px; color: var(--text-muted); }
+  .topic-item .score { font-size: 12px; color: var(--ok-text); font-weight: 600; flex-shrink: 0; }
+  .topic-item .level {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 6px;
+    margin-left: 6px;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .level-basic { background: #dbeafe; color: #1e40af; }
+  .level-apply { background: #fef3c7; color: #92400e; }
+  html[data-theme="dark"] .level-basic { background: #1e3050; color: #93c5fd; }
+  html[data-theme="dark"] .level-apply { background: #3b2a0f; color: #fcd34d; }
+
+  .section-title {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 24px 0 10px;
+    font-weight: 700;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+  }
+  @media (min-width: 768px) { .card { padding: 24px; } }
+  .card h2 { font-size: 17px; margin-bottom: 14px; }
+  .explanation {
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.9;
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+  }
+  .example-box {
+    background: var(--secondary);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .example-box .label {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .btn-primary {
+    width: 100%;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+    min-height: 48px;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+  .btn-primary:disabled { background: var(--primary-disabled); cursor: default; }
+  .btn-secondary {
+    width: 100%;
+    background: var(--secondary);
+    color: var(--text);
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    font-family: inherit;
+    min-height: 48px;
+  }
+  .btn-secondary:hover { background: var(--secondary-hover); }
+
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .dots { display: flex; gap: 4px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dot-inactive); }
+  .dot.ok { background: var(--ok); }
+  .dot.ng { background: var(--ng); }
+  .question-text { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .choice {
+    text-align: left;
+    padding: 14px 16px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    border-radius: 12px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    color: var(--text);
+    min-height: 48px;
+  }
+  .choice:hover:not(:disabled) { background: var(--secondary); }
+  .choice:disabled { cursor: default; }
+  .choice.correct { border-color: var(--ok); background: var(--ok-bg); }
+  .choice.wrong { border-color: var(--ng); background: var(--ng-bg); }
+  .choice.dim { opacity: 0.55; }
+  .verdict { margin-bottom: 16px; }
+  .verdict .label { font-weight: 600; margin-bottom: 4px; }
+  .verdict .label.ok { color: var(--ok-text); }
+  .verdict .label.ng { color: var(--ng-text); }
+  .verdict .exp { font-size: 14px; color: var(--text); line-height: 1.7; }
+
+  .result-card { text-align: center; }
+  .result-card .label { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
+  .result-card .score-big { font-size: 48px; font-weight: 800; margin-bottom: 8px; }
+  .result-card .msg { color: var(--text-muted); margin-bottom: 24px; font-size: 14px; }
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row > * { flex: 1; }
+
+  /* 検索 */
+  .search-box {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    margin-bottom: 16px;
+    min-height: 48px;
+  }
+  .search-box::placeholder { color: var(--text-muted); }
+  .search-box:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="#/">ミニ学</a>
+  <div class="right">
+    <div class="streak" id="streak-display"></div>
+    <button class="theme-btn" id="theme-btn" aria-label="テーマ切替" title="ダーク/ライト切替">🌙</button>
+  </div>
+</header>
+<main id="app"></main>
+
+<script>
+// ============================================================
+// 分野データ（27分野）
+// 各分野： id, name, emoji, group, description, topics[]
+// 各トピック： id, title, summary, level("basic"|"apply"),
+//             explanation, example, questions[3]
+// ============================================================
+const FIELDS_DATA = [
+  // ---------- お金 ----------
+  {
+    id: "money", name: "お金", emoji: "💰", group: "生活・経済",
+    description: "複利・投資・税金など、お金の基本を基礎から応用まで。",
+    topics: [
+      { id: "fukuri", title: "複利とは", summary: "利息にも利息がつく仕組み", level: "basic",
+        explanation: "複利とは、元本だけでなく「利息にも利息がつく」計算方法です。\n100万円を年利5%で運用すると、1年後は105万円。2年目は「105万円に対して5%」がつくので、110.25万円になります。長く運用するほど、単利との差が大きくなります。",
+        example: "100万円を年利5%で10年運用 → 単利は150万円、複利は約163万円。",
+        questions: [
+          { text: "100万円を年利5%の複利で2年間運用すると、2年後の金額は？", choices: ["110万円", "110.25万円", "105万円", "115万円"], correctIndex: 1, explanation: "1年後は105万円。2年目は105万円×1.05＝110.25万円です。" },
+          { text: "複利の効果が大きくなるのはどんなとき？", choices: ["短期間で運用したとき", "長期間運用したとき", "利息が低いとき", "元本が少ないとき"], correctIndex: 1, explanation: "複利は期間が長いほど、利息の雪だるま式増加が効きます。" },
+          { text: "単利と複利の違いは？", choices: ["単利は利息に利息がつく", "複利は利息に利息がつく", "単利は元本が増える", "どちらも同じ"], correctIndex: 1, explanation: "複利は利息にも利息がつきます。単利は元本にだけ利息がつきます。" }
+        ]
+      },
+      { id: "tanpuku", title: "単利と複利の違い", summary: "利息の計算方法の違い", level: "basic",
+        explanation: "単利は「元本だけ」に対して利息がつきます。複利は「元本＋利息」に対して利息がつきます。",
+        example: "100万円を年利5%で10年運用 → 単利は150万円、複利は約163万円。",
+        questions: [
+          { text: "100万円を年利5%の単利で10年運用したときの利息の合計は？", choices: ["50万円", "63万円", "100万円", "5万円"], correctIndex: 0, explanation: "単利は毎年100万円の5%＝5万円。10年で50万円です。" },
+          { text: "複利の方が単利より有利になるのは？", choices: ["短期間の運用", "長期間の運用", "利息が低いとき", "元本が0のとき"], correctIndex: 1, explanation: "期間が長いほど、複利と単利の差が広がります。" },
+          { text: "元本100万円、年利5%の複利で1年後の金額は？", choices: ["100万円", "105万円", "110万円", "95万円"], correctIndex: 1, explanation: "100万円×1.05＝105万円です。" }
+        ]
+      },
+      { id: "infure", title: "インフレとお金の価値", summary: "物価が上がるとお金の価値は下がる", level: "basic",
+        explanation: "インフレとは物価が上がり、お金の価値が下がることです。同じ100円で買えるものが減っていきます。現金をタンスにしまっておくと、インフレによって実質的な価値が目減りする可能性があります。",
+        example: "年2%のインフレが10年続くと、100万円の実質価値は約82万円相当に。",
+        questions: [
+          { text: "インフレになると、お金の価値はどうなる？", choices: ["上がる", "下がる", "変わらない", "倍になる"], correctIndex: 1, explanation: "物価が上がると、同じ金額で買えるものが減るので、お金の価値は下がります。" },
+          { text: "インフレ時に現金をそのまま持っておくと？", choices: ["実質価値が増える", "実質価値が減る", "価値は変わらない", "税金的に有利"], correctIndex: 1, explanation: "物価上昇に現金の価値が追いつかず、実質的に目減りします。" },
+          { text: "インフレの反対語は？", choices: ["リフレ", "デフレ", "スタグフレーション", "ハイパーインフレ"], correctIndex: 1, explanation: "物価が下がり続ける状態をデフレといいます。" }
+        ]
+      },
+      { id: "bunsan", title: "分散投資", summary: "卵は一つのカゴに盛るな", level: "apply",
+        explanation: "分散投資とは、資産を複数のものに分けて投資することです。「卵は一つのカゴに盛るな」という言葉通り、1つに集中すると大きく損をするリスクがあります。株式・債券・不動産など、値動きの異なるものに分けることでリスクを抑えます。",
+        example: "日本株・米国株・債券・金を組み合わせると、1つが暴落しても全体の下落を緩和できる。",
+        questions: [
+          { text: "分散投資の目的は？", choices: ["リターンを最大化する", "リスクを抑える", "税金を減らす", "利息を増やす"], correctIndex: 1, explanation: "値動きの異なる資産に分けることで、全体のリスクを抑えるのが目的です。" },
+          { text: "「卵は一つのカゴに盛るな」は何のたとえ？", choices: ["貯金", "分散投資", "保険", "税金"], correctIndex: 1, explanation: "1つのカゴを落とすと全部割れる＝1つに集中投資すると大損のリスクがあります。" },
+          { text: "分散投資の例として正しいのは？", choices: ["1社の株だけ買う", "日本株と米国株と債券を買う", "現金だけ持つ", "借金して株を買う"], correctIndex: 1, explanation: "値動きの異なる複数の資産に分けるのが分散投資です。" }
+        ]
+      },
+      { id: "risk-return", title: "リスクとリターン", summary: "高いリターンには高いリスクが伴う", level: "apply",
+        explanation: "投資の世界では「ハイリスク・ハイリターン」が基本です。高いリターンを狙うほど、値下がりのリスクも大きくなります。逆に、元本保証の預金はリターンが小さい代わりにリスクも小さいです。",
+        example: "預金（低リスク・低リターン）⇔ 株式（高リスク・高リターン）。",
+        questions: [
+          { text: "一般に、高いリターンを狙うとリスクは？", choices: ["小さくなる", "大きくなる", "変わらない", "ゼロになる"], correctIndex: 1, explanation: "高いリターンを狙うほど、値下がりのリスクも大きくなります。" },
+          { text: "元本保証の預金の特徴は？", choices: ["高リターン・高リスク", "低リターン・低リスク", "高リターン・低リスク", "低リターン・高リスク"], correctIndex: 1, explanation: "預金は元本保証でリスクが低い代わりに、リターンも小さいです。" },
+          { text: "「ハイリスク・ハイリターン」の意味は？", choices: ["リスクが高いほどリターンも高い", "リスクが高いほどリターンが低い", "リスクとリターンは無関係", "リスクがゼロでもリターンは高い"], correctIndex: 0, explanation: "高いリターンを狙うには、それ相応のリスクを取る必要があるという考え方です。" }
+        ]
+      },
+      { id: "72rule", title: "72の法則", summary: "お金が2倍になる年数の目安", level: "basic",
+        explanation: "「72の法則」は、お金が2倍になるまでの年数をざっくり計算する方法です。「72 ÷ 年利（%）」で求められます。",
+        example: "年利6%なら 72÷6＝12年で2倍。年利8%なら 72÷8＝9年で2倍。",
+        questions: [
+          { text: "年利6%でお金が2倍になるのは約何年？", choices: ["6年", "12年", "20年", "72年"], correctIndex: 1, explanation: "72÷6＝12年です。" },
+          { text: "72の法則で求まるのは？", choices: ["利息の合計", "2倍になるまでの年数", "税金の額", "リスクの大きさ"], correctIndex: 1, explanation: "72を年利で割ると、お金が2倍になる年数の目安がわかります。" },
+          { text: "年利8%で2倍になるのは約何年？", choices: ["8年", "9年", "12年", "16年"], correctIndex: 1, explanation: "72÷8＝9年です。" }
+        ]
+      },
+      { id: "tax", title: "税金の基本", summary: "稼いだら税金がかかる", level: "basic",
+        explanation: "日本では、所得（稼いだお金）に対して所得税がかかります。また、モノを買うときには消費税（10%）がかかります。税金は私たちの生活を支える公共サービス（道路・学校・医療など）の財源です。",
+        example: "給与の手取りは、所得税・住民税・社会保険料が引かれた残り。",
+        questions: [
+          { text: "モノを買うときにかかる税金は？", choices: ["所得税", "消費税", "住民税", "固定資産税"], correctIndex: 1, explanation: "買い物のときに払うのは消費税です（標準税率10%）。" },
+          { text: "所得税は何にかかる？", choices: ["モノを買ったとき", "所得（稼いだお金）", "家を持ったとき", "車を買ったとき"], correctIndex: 1, explanation: "所得税は、給与などの所得に対してかかります。" },
+          { text: "税金の使われ方として正しいのは？", choices: ["道路や学校などの公共サービス", "企業の利益", "個人の貯金", "株の配当"], correctIndex: 0, explanation: "税金は公共サービスを支える財源として使われます。" }
+        ]
+      },
+      { id: "chokin-unyo", title: "貯金と運用", summary: "貯金と運用のバランス", level: "apply",
+        explanation: "貯金は元本保証で安心ですが、利息はほとんどつきません。運用は値動きのリスクがありますが、長期的には資産を増やせる可能性があります。生活防衛資金（半年〜1年分の生活費）は貯金で確保し、余剰分を運用に回すのが基本です。",
+        example: "生活費20万円×6ヶ月＝120万円を貯金で確保し、余剰分を投資に。",
+        questions: [
+          { text: "生活防衛資金はどこで確保するのが基本？", choices: ["株", "貯金", "仮想通貨", "保険"], correctIndex: 1, explanation: "生活防衛資金は、急な出費に備えて元本保証の貯金で確保します。" },
+          { text: "貯金のデメリットは？", choices: ["元本が減る", "利息がほとんどつかない", "引き出せない", "税金がかからない"], correctIndex: 1, explanation: "貯金は安心ですが、利息がほとんどつかないというデメリットがあります。" },
+          { text: "余剰資金の運用として一般的な考え方は？", choices: ["全額を1つの株に投資", "分散して長期運用", "借金して投資", "全て現金で持つ"], correctIndex: 1, explanation: "余剰資金は、分散して長期で運用するのが基本です。" }
+        ]
+      },
+      { id: "risoku", title: "利息の計算", summary: "利息＝元本×利率", level: "basic",
+        explanation: "利息は「元本 × 利率」で計算できます。利率は%表示なので、計算するときは100で割って小数に直します。",
+        example: "100万円 × 年利2% ＝ 100万 × 0.02 ＝ 2万円。",
+        questions: [
+          { text: "100万円を年利2%で1年運用したときの利息は？", choices: ["2万円", "20万円", "2000円", "10万円"], correctIndex: 0, explanation: "100万円 × 0.02 ＝ 2万円です。" },
+          { text: "50万円を年利4%で1年運用したときの利息は？", choices: ["2万円", "4万円", "5万円", "20万円"], correctIndex: 0, explanation: "50万円 × 0.04 ＝ 2万円です。" },
+          { text: "年利3%を小数で表すと？", choices: ["0.3", "0.03", "0.003", "3.0"], correctIndex: 1, explanation: "3% ＝ 3 ÷ 100 ＝ 0.03です。" }
+        ]
+      },
+      { id: "hoken", title: "保険の基本", summary: "保険は「万が一」に備える仕組み", level: "apply",
+        explanation: "保険は、病気や事故などの「万が一」に備える仕組みです。多くの人が少しずつお金を出し合い、困った人を助けます。若いうちは必要な保険は少ないことが多く、必要な保障だけを選ぶのが基本です。",
+        example: "医療保険・生命保険・火災保険など、リスクに応じて選ぶ。",
+        questions: [
+          { text: "保険の基本的な仕組みは？", choices: ["1人で大きな金額を払う", "多くの人でお金を出し合う", "国が全額負担する", "株で運用する"], correctIndex: 1, explanation: "保険は、多くの加入者が保険料を出し合い、困った人を助ける仕組みです。" },
+          { text: "保険で備えるものは？", choices: ["毎日の食事", "病気や事故などの万が一", "株の値上がり", "税金の支払い"], correctIndex: 1, explanation: "保険は、病気・事故・災害などの万が一の事態に備えます。" },
+          { text: "保険を選ぶときの基本は？", choices: ["できるだけ多く加入する", "必要な保障だけを選ぶ", "保険料が高いほど良い", "全て同じ"], correctIndex: 1, explanation: "必要な保障だけを選ぶことが、保険選びの基本です。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 心理 ----------
+  {
+    id: "psych", name: "心理学", emoji: "🧠", group: "人文・社会",
+    description: "認知バイアスや習慣化など、心の仕組みを基礎から応用まで。",
+    topics: [
+      { id: "anchoring", title: "アンカリング", summary: "最初の数字が判断を左右する", level: "basic",
+        explanation: "アンカリングとは、最初に見た数字や情報（アンカー）に判断が引っ張られる心理効果です。「定価1万円→今だけ5,000円」と表示されると安く感じるのは、この効果のためです。",
+        example: "「定価1万円→半額5,000円」の表示でお得感が出る。",
+        questions: [
+          { text: "アンカリングの例は？", choices: ["定価1万円→半額の5,000円に安く感じる", "友達が買ったから買う", "好きな人を贔屓する", "一度始めたらやめられない"], correctIndex: 0, explanation: "最初に見た「定価1万円」がアンカーになり、5,000円を安く感じます。" },
+          { text: "アンカリングで使われるのは？", choices: ["最初に見た数字や情報", "最後に見た数字", "平均値", "中央値"], correctIndex: 0, explanation: "最初に提示された数字や情報がアンカーとして判断に影響します。" },
+          { text: "アンカリングを避けるには？", choices: ["最初の数字を信じる", "複数の情報を比較する", "直感で決める", "周りに合わせる"], correctIndex: 1, explanation: "複数の選択肢を比較することで、アンカリングの影響を減らせます。" }
+        ]
+      },
+      { id: "confirmation", title: "確証バイアス", summary: "自分の考えを支持する情報ばかり集める", level: "basic",
+        explanation: "確証バイアスとは、自分が信じたい情報や都合の良い情報ばかりを集めてしまう心理効果です。反対の情報を無視しがちになります。フェイクニュースが拡散される一因でもあります。",
+        example: "SNSで自分と同じ意見のアカウントだけフォローしてしまう。",
+        questions: [
+          { text: "確証バイアスの例は？", choices: ["好きな意見ばかり集めてしまう", "最初の数字に引っ張られる", "一度始めたらやめられない", "周りに合わせる"], correctIndex: 0, explanation: "自分の信念を支持する情報ばかり集めるのが確証バイアスです。" },
+          { text: "確証バイアスを避けるには？", choices: ["自分の意見だけを信じる", "反対意見も意識的に読む", "直感で決める", "SNSだけを見る"], correctIndex: 1, explanation: "意識的に反対意見や多様な情報に触れることが大切です。" },
+          { text: "確証バイアスが起こりやすいのは？", choices: ["情報が少ないとき", "自分の信念が強いとき", "眠いとき", "空腹のとき"], correctIndex: 1, explanation: "自分の信念が強いほど、都合の良い情報ばかり集めがちになります。" }
+        ]
+      },
+      { id: "halo", title: "ハロー効果", summary: "一つの良い印象が全体の評価を歪める", level: "basic",
+        explanation: "ハロー効果とは、一つの目立つ特徴（容姿・肩書きなど）が、他の評価にも影響する心理効果です。",
+        example: "「有名大学出身だから仕事もできそう」と感じる。",
+        questions: [
+          { text: "ハロー効果の例は？", choices: ["容姿が良い人を何でもできると評価する", "定価に引っ張られる", "周りに合わせる", "一度始めたらやめられない"], correctIndex: 0, explanation: "一つの良い特徴が、他の評価にも影響するのがハロー効果です。" },
+          { text: "ハロー効果で影響するのは？", choices: ["一つの目立つ特徴が全体評価に影響", "最初の数字だけ", "周囲の人数", "金額だけ"], correctIndex: 0, explanation: "容姿・肩書きなど一つの特徴が、全体の印象を歪めます。" },
+          { text: "ハロー効果を避けるには？", choices: ["第一印象だけで判断する", "複数の側面から評価する", "肩書きだけを見る", "直感を信じる"], correctIndex: 1, explanation: "第一印象だけでなく、複数の側面から多面的に評価することが大切です。" }
+        ]
+      },
+      { id: "sunkcost", title: "サンクコスト効果", summary: "もったいないからやめられない", level: "apply",
+        explanation: "サンクコスト効果とは、すでに払ったお金や時間（サンクコスト）にこだわって、やめるべきことをやめられなくなる心理です。",
+        example: "つまらない映画をチケット代がもったいなくて最後まで見る。",
+        questions: [
+          { text: "サンクコスト効果の例は？", choices: ["つまらない映画をチケット代がもったいなくて最後まで見る", "定価に引っ張られる", "好きな人を贔屓する", "周りに合わせる"], correctIndex: 0, explanation: "すでに払ったお金にこだわって、やめるべきことをやめられないのがサンクコスト効果です。" },
+          { text: "サンクコストとは？", choices: ["これから払うお金", "すでに払ったお金や時間", "貯金", "税金"], correctIndex: 1, explanation: "サンクコストは「すでに払ってしまったお金や時間」のことです。" },
+          { text: "サンクコスト効果を避けるには？", choices: ["これからの損得で判断する", "過去の支出にこだわる", "直感で決める", "周りに合わせる"], correctIndex: 0, explanation: "すでに払った分は取り戻せないので、これからの損得で判断します。" }
+        ]
+      },
+      { id: "prospect", title: "プロスペクト理論", summary: "人は損失を大きく感じる", level: "apply",
+        explanation: "プロスペクト理論は、人が利益より損失を強く感じる心理を説明します。ダニエル・カーネマンが提唱しました。",
+        example: "同じ1万円でも「もらう喜び」より「失う痛み」の方が大きい。",
+        questions: [
+          { text: "プロスペクト理論の特徴は？", choices: ["利益を強く感じる", "損失を強く感じる", "利益と損失を同じに感じる", "どちらも感じない"], correctIndex: 1, explanation: "人は同じ金額でも、利益より損失を強く感じます。" },
+          { text: "プロスペクト理論を提唱したのは？", choices: ["ダニエル・カーネマン", "アダム・スミス", "マルクス", "ケインズ"], correctIndex: 0, explanation: "ダニエル・カーネマンが提唱した行動経済学の理論です。" },
+          { text: "プロスペクト理論が影響するのは？", choices: ["投資の判断", "天気", "体力", "言語"], correctIndex: 0, explanation: "損失を強く感じるため、投資で損切りが遅れるなどの影響があります。" }
+        ]
+      },
+      { id: "bandwagon", title: "バンドワゴン効果", summary: "みんなが買うから買う", level: "basic",
+        explanation: "バンドワゴン効果とは、多くの人が選んでいるものに自分も合わせたくなる心理効果です。",
+        example: "「売上No.1」「みんな使ってる」の表示で買いたくなる。",
+        questions: [
+          { text: "バンドワゴン効果の例は？", choices: ["売上No.1だから買う", "定価に引っ張られる", "損失を強く感じる", "一度始めたらやめられない"], correctIndex: 0, explanation: "多くの人が選んでいるものに合わせたくなるのがバンドワゴン効果です。" },
+          { text: "バンドワゴン効果はどんな表示に弱い？", choices: ["限定価格", "売上No.1", "送料無料", "ポイント2倍"], correctIndex: 1, explanation: "「売上No.1」「みんな使ってる」などの表示に影響を受けやすいです。" },
+          { text: "バンドワゴン効果の反対は？", choices: ["スノッブ効果", "ハロー効果", "アンカリング", "確証バイアス"], correctIndex: 0, explanation: "他の人と違うものを選びたい心理をスノッブ効果といいます。" }
+        ]
+      },
+      { id: "habit", title: "習慣化", summary: "小さく始めて続ける", level: "apply",
+        explanation: "習慣化とは、ある行動を無意識に繰り返せるようになることです。「小さく始める」「きっかけを作る」「ご褒美を用意する」のがコツです。",
+        example: "毎朝コーヒーを飲んだ後に5分読書する、など既存習慣に紐づける。",
+        questions: [
+          { text: "習慣化のコツは？", choices: ["最初から大きく始める", "小さく始める", "一度にたくさんやる", "完璧を目指す"], correctIndex: 1, explanation: "小さく始めることで、無理なく続けられます。" },
+          { text: "習慣化にかかる平均日数は？", choices: ["3日", "21日", "66日", "365日"], correctIndex: 2, explanation: "研究では、習慣化には平均66日かかると言われています。" },
+          { text: "習慣化に有効なのは？", choices: ["きっかけとご褒美", "罰則", "完璧主義", "一夜漬け"], correctIndex: 0, explanation: "きっかけ（トリガー）とご褒美を組み合わせると習慣化しやすいです。" }
+        ]
+      },
+      { id: "memory", title: "記憶の仕組み", summary: "繰り返しと関連づけで覚える", level: "basic",
+        explanation: "人間の記憶は、短期記憶と長期記憶に分かれます。短期記憶は数十秒で消えますが、繰り返したり関連づけたりすることで長期記憶に移ります。",
+        example: "英単語を何度も音読し、例文と関連づけると覚えやすい。",
+        questions: [
+          { text: "短期記憶が長期記憶に移るには？", choices: ["時間が経つだけ", "繰り返しや関連づけ", "忘れる", "睡眠を削る"], correctIndex: 1, explanation: "繰り返しや関連づけによって、短期記憶は長期記憶に移ります。" },
+          { text: "記憶の定着に重要なのは？", choices: ["睡眠", "徹夜", "空腹", "運動"], correctIndex: 0, explanation: "睡眠中に記憶が整理・定着されるため、睡眠は重要です。" },
+          { text: "短期記憶の特徴は？", choices: ["数秒〜数十秒で消える", "一生残る", "無限に覚えられる", "睡眠中に消える"], correctIndex: 0, explanation: "短期記憶は数十秒で消えると言われています。" }
+        ]
+      },
+      { id: "pomodoro", title: "ポモドーロ", summary: "25分集中＋5分休憩", level: "apply",
+        explanation: "ポモドーロ・テクニックは、25分の集中と5分の休憩を繰り返す時間管理術です。4セットやったら15〜30分の長い休憩を取ります。",
+        example: "25分作業→5分休憩を4セット→30分休憩、を繰り返す。",
+        questions: [
+          { text: "ポモドーロ・テクニックの基本は？", choices: ["25分集中＋5分休憩", "50分集中＋10分休憩", "90分集中＋20分休憩", "5分集中＋25分休憩"], correctIndex: 0, explanation: "25分の集中と5分の休憩を1セットにするのが基本です。" },
+          { text: "ポモドーロの効果は？", choices: ["集中力を保ちやすい", "睡眠時間が増える", "記憶が消える", "体力が落ちる"], correctIndex: 0, explanation: "短い集中を繰り返すことで、集中力を保ちやすくなります。" },
+          { text: "ポモドーロで4セット後に取る休憩は？", choices: ["1分", "5分", "15〜30分", "2時間"], correctIndex: 2, explanation: "4セット後は15〜30分の長めの休憩を取ります。" }
+        ]
+      },
+      { id: "loss-aversion", title: "損失回避", summary: "損を避けたくなる心理", level: "apply",
+        explanation: "損失回避とは、同じ金額の利益より損失を強く感じる心理です。投資や買い物の判断に影響します。",
+        example: "値下がりした株を「損を確定したくない」と売れない。",
+        questions: [
+          { text: "損失回避の特徴は？", choices: ["利益を強く感じる", "損失を強く感じる", "利益と損失を同じに感じる", "どちらも感じない"], correctIndex: 1, explanation: "同じ金額でも、損失の方が強く感じられます。" },
+          { text: "損失回避が影響するのは？", choices: ["投資の損切り", "天気", "言語", "体力"], correctIndex: 0, explanation: "損失を避けたい心理から、損切りが遅れることがあります。" },
+          { text: "損失回避の例は？", choices: ["値下がりした株を売れない", "安いものだけ買う", "周りに合わせる", "最初の数字に引っ張られる"], correctIndex: 0, explanation: "損失を確定したくない心理から、値下がりした株を売れなくなります。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 数学 ----------
+  {
+    id: "math", name: "数学", emoji: "📐", group: "自然科学",
+    description: "確率・指数・三平方の定理などを基礎から応用まで。",
+    topics: [
+      { id: "probability", title: "確率の基本", summary: "起こりやすさを0〜1で表す", level: "basic",
+        explanation: "確率とは、ある出来事が起こる可能性を0〜1（または0〜100%）で表したものです。必ず起こることは1、絶対に起こらないことは0です。",
+        example: "サイコロで1が出る確率＝1/6、偶数の確率＝3/6＝1/2。",
+        questions: [
+          { text: "サイコロを1回振って1が出る確率は？", choices: ["1/2", "1/3", "1/6", "1/12"], correctIndex: 2, explanation: "1〜6の6通りあるうちの1通りなので、1/6です。" },
+          { text: "確率が1のとき、その出来事は？", choices: ["絶対に起こらない", "必ず起こる", "半分の確率で起こる", "2回に1回起こる"], correctIndex: 1, explanation: "確率1は「必ず起こる」ことを意味します。" },
+          { text: "コインを1回投げて表が出る確率は？", choices: ["1/4", "1/3", "1/2", "1"], correctIndex: 2, explanation: "表と裏の2通りあるうちの1通りなので、1/2です。" }
+        ]
+      },
+      { id: "expected-value", title: "期待値", summary: "平均的に得られる値", level: "apply",
+        explanation: "期待値とは、ある試行を繰り返したときに平均的に得られる値です。「確率 × 値」を足し合わせて求めます。",
+        example: "サイコロの出目の期待値＝(1+2+3+4+5+6)/6＝3.5。",
+        questions: [
+          { text: "サイコロの出目の期待値は？", choices: ["3", "3.5", "4", "6"], correctIndex: 1, explanation: "(1+2+3+4+5+6)/6＝21/6＝3.5です。" },
+          { text: "期待値の求め方は？", choices: ["確率 × 値 の合計", "値の合計", "確率の合計", "最大値 × 最小値"], correctIndex: 0, explanation: "各事象の「確率 × 値」を足し合わせます。" },
+          { text: "宝くじの期待値が購入額より低いのはなぜ？", choices: ["当たる確率が高いから", "当選金額と確率の積が購入額より低いから", "税金がかからないから", "必ず当たるから"], correctIndex: 1, explanation: "期待値が購入額を下回るため、長期的には損をしやすいです。" }
+        ]
+      },
+      { id: "mean-median", title: "平均と中央値", summary: "代表値の違いを知る", level: "basic",
+        explanation: "平均値は全ての値を足して個数で割った値、中央値は値を小さい順に並べたときの真ん中の値です。外れ値がある場合、中央値の方が実態を表すことがあります。",
+        example: "1,2,3,4,100 の平均は22、中央値は3。",
+        questions: [
+          { text: "データ 1, 2, 3, 4, 100 の平均値は？", choices: ["3", "22", "100", "5"], correctIndex: 1, explanation: "(1+2+3+4+100)/5＝110/5＝22です。" },
+          { text: "データ 1, 2, 3, 4, 100 の中央値は？", choices: ["1", "3", "22", "100"], correctIndex: 1, explanation: "小さい順に並べたときの真ん中は3です。" },
+          { text: "外れ値があるときに実態を表しやすいのは？", choices: ["平均値", "中央値", "最大値", "最小値"], correctIndex: 1, explanation: "外れ値の影響を受けにくい中央値の方が実態を表しやすいです。" }
+        ]
+      },
+      { id: "percent", title: "百分率", summary: "割合を%で表す", level: "basic",
+        explanation: "百分率（パーセント）は、全体を100としたときの割合です。20%は0.2と同じ意味です。",
+        example: "1,000円の20%オフ＝1,000×(1-0.2)＝800円。",
+        questions: [
+          { text: "20%を小数で表すと？", choices: ["0.02", "0.2", "2.0", "20"], correctIndex: 1, explanation: "20%＝20÷100＝0.2です。" },
+          { text: "1,000円の20%オフは？", choices: ["200円", "800円", "980円", "1,200円"], correctIndex: 1, explanation: "1,000×(1-0.2)＝800円です。" },
+          { text: "50%は何分の1？", choices: ["1/2", "1/4", "1/5", "1/10"], correctIndex: 0, explanation: "50%＝50/100＝1/2です。" }
+        ]
+      },
+      { id: "linear", title: "一次関数", summary: "y = ax + b の形", level: "basic",
+        explanation: "一次関数は y = ax + b の形で表される関数です。aは傾き、bは切片（y軸との交点）を表します。",
+        example: "y = 2x + 1 は傾き2、切片1。x=3 のとき y=7。",
+        questions: [
+          { text: "y = 2x + 1 の傾きは？", choices: ["1", "2", "3", "0"], correctIndex: 1, explanation: "y = ax + b のaが傾きなので、傾きは2です。" },
+          { text: "y = 3x - 2 の切片は？", choices: ["-2", "2", "3", "-3"], correctIndex: 0, explanation: "y = ax + b のbが切片なので、切片は-2です。" },
+          { text: "y = 2x + 1 で x=3 のときの y は？", choices: ["5", "6", "7", "8"], correctIndex: 2, explanation: "y = 2×3 + 1 = 7です。" }
+        ]
+      },
+      { id: "exponent", title: "指数", summary: "同じ数を繰り返しかける", level: "basic",
+        explanation: "指数とは、同じ数を何回かけるかを表す表記です。2³は「2を3回かける」＝2×2×2＝8です。",
+        example: "2³×2²＝2⁵、10⁰＝1。",
+        questions: [
+          { text: "2³ の値は？", choices: ["6", "8", "9", "12"], correctIndex: 1, explanation: "2³＝2×2×2＝8です。" },
+          { text: "2³ × 2² は？", choices: ["2⁵", "2⁶", "4⁵", "2"], correctIndex: 0, explanation: "指数法則より、2³×2²＝2^(3+2)＝2⁵です。" },
+          { text: "10⁰ の値は？", choices: ["0", "1", "10", "100"], correctIndex: 1, explanation: "0乗は1と定義されます（10⁰＝1）。" }
+        ]
+      },
+      { id: "prime", title: "素数", summary: "1と自分だけでは割れない数", level: "basic",
+        explanation: "素数とは、1より大きい整数で、1とその数自身以外では割り切れない数のことです。1は素数ではありません。",
+        example: "2, 3, 5, 7, 11, 13, ... が素数。",
+        questions: [
+          { text: "次のうち素数は？", choices: ["4", "6", "7", "9"], correctIndex: 2, explanation: "7は1と7でしか割り切れないので素数です。" },
+          { text: "1は素数？", choices: ["はい", "いいえ", "2と1は素数", "条件による"], correctIndex: 1, explanation: "1は素数に含まれません。" },
+          { text: "10以下の素数の個数は？", choices: ["3個", "4個", "5個", "6個"], correctIndex: 1, explanation: "2, 3, 5, 7 の4個です。" }
+        ]
+      },
+      { id: "pythagoras", title: "三平方の定理", summary: "a² + b² = c²", level: "apply",
+        explanation: "三平方の定理（ピタゴラスの定理）は、直角三角形の直角をはさむ2辺の長さをa, b、斜辺をcとすると、a² + b² = c² が成り立つという定理です。",
+        example: "3-4-5 の直角三角形。3²+4²=5²。",
+        questions: [
+          { text: "三平方の定理の式は？", choices: ["a + b = c", "a² + b² = c²", "a × b = c", "a² - b² = c²"], correctIndex: 1, explanation: "直角三角形の直角をはさむ2辺をa, b、斜辺をcとすると、a² + b² = c²です。" },
+          { text: "直角をはさむ2辺が3と4のとき、斜辺の長さは？", choices: ["5", "6", "7", "8"], correctIndex: 0, explanation: "3² + 4² = 9 + 16 = 25、√25 = 5です。" },
+          { text: "斜辺が5、1辺が3のとき、もう1辺は？", choices: ["4", "5", "6", "7"], correctIndex: 0, explanation: "3² + b² = 5² → 9 + b² = 25 → b² = 16 → b = 4です。" }
+        ]
+      },
+      { id: "combination", title: "組合せ", summary: "順番を区別しない選び方", level: "apply",
+        explanation: "組合せとは、順番を区別せずに選ぶ方法の数です。n個からr個を選ぶ組合せは nCr で表されます。",
+        example: "5人から2人を選ぶ組合せ＝5C2＝10通り。",
+        questions: [
+          { text: "5人から2人を選ぶ組合せは？", choices: ["5通り", "10通り", "20通り", "25通り"], correctIndex: 1, explanation: "5C2＝(5×4)/(2×1)＝10通りです。" },
+          { text: "組合せと順列の違いは？", choices: ["順番を区別するかどうか", "人数の違い", "金額の違い", "時間の違い"], correctIndex: 0, explanation: "組合せは順番を区別せず、順列は順番を区別します。" },
+          { text: "4人から2人を選ぶ組合せは？", choices: ["4通り", "6通り", "8通り", "12通り"], correctIndex: 1, explanation: "4C2＝(4×3)/(2×1)＝6通りです。" }
+        ]
+      },
+      { id: "quadratic", title: "二次方程式", summary: "ax² + bx + c = 0 の形", level: "apply",
+        explanation: "二次方程式は ax² + bx + c = 0 の形の方程式です。因数分解や解の公式で解くことができます。",
+        example: "x²-5x+6=0 → (x-2)(x-3)=0 → x=2,3。",
+        questions: [
+          { text: "x² - 5x + 6 = 0 の解は？", choices: ["x = 1, 6", "x = 2, 3", "x = -2, -3", "x = 5, 6"], correctIndex: 1, explanation: "(x-2)(x-3) = 0 より、x = 2, 3です。" },
+          { text: "x² = 9 の解は？", choices: ["x = 3", "x = ±3", "x = 9", "x = -9"], correctIndex: 1, explanation: "x² = 9 より、x = ±3です。" },
+          { text: "x² - 4 = 0 の解は？", choices: ["x = ±2", "x = 2", "x = 4", "x = -4"], correctIndex: 0, explanation: "x² = 4 より、x = ±2です。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 哲学 ----------
+  {
+    id: "philosophy", name: "哲学", emoji: "🦉", group: "人文・社会",
+    description: "存在・知識・倫理など、考えるための土台を基礎から。",
+    topics: [
+      { id: "what-is-philosophy", title: "哲学とは何か", summary: "当たり前を問い直す営み", level: "basic",
+        explanation: "哲学は「なぜ？」「本当にそうか？」と、当たり前を問い直す学問です。答えよりも「問い方」を重視します。ソクラテスは「無知の知」を説き、問い続けることを大切にしました。",
+        example: "「正義とは何か」「自由とは何か」を根本から考える。",
+        questions: [
+          { text: "哲学の基本的な姿勢は？", choices: ["答えを暗記する", "当たり前を問い直す", "実験で確かめる", "多数決で決める"], correctIndex: 1, explanation: "哲学は、当たり前とされることを根本から問い直します。" },
+          { text: "ソクラテスが説いたのは？", choices: ["無知の知", "絶対王政", "進化論", "相対性理論"], correctIndex: 0, explanation: "「自分が知らないことを知っている」という無知の知を説きました。" },
+          { text: "哲学が重視するのは？", choices: ["問い方", "暗記量", "計算速度", "体力"], correctIndex: 0, explanation: "哲学は答えよりも、どのように問うかを重視します。" }
+        ]
+      },
+      { id: "logic", title: "論理学の基本", summary: "正しい推論のルール", level: "basic",
+        explanation: "論理学は、正しい推論の形を研究する学問です。「AならばB、Aである、ゆえにB」という推論（肯定式）が代表例です。前提が正しく、推論が正しければ、結論も正しくなります。",
+        example: "「人間は死ぬ。ソクラテスは人間。ゆえにソクラテスは死ぬ。」",
+        questions: [
+          { text: "「AならばB、Aである、ゆえにB」を何という？", choices: ["肯定式", "否定式", "三段論法", "背理法"], correctIndex: 0, explanation: "この推論の形を肯定式（モーダス・ポネンス）といいます。" },
+          { text: "論理学が研究するのは？", choices: ["正しい推論の形", "料理の仕方", "体力づくり", "株価"], correctIndex: 0, explanation: "論理学は、正しい推論のルールを研究します。" },
+          { text: "前提が正しく推論も正しければ結論は？", choices: ["必ず正しい", "必ず誤り", "時と場合による", "無意味"], correctIndex: 0, explanation: "前提が真で推論が妥当なら、結論も真になります。" }
+        ]
+      },
+      { id: "ethics", title: "倫理学の基本", summary: "どう生きるべきか", level: "apply",
+        explanation: "倫理学は「どう生きるべきか」「何が正しい行いか」を考える学問です。代表的な立場に、結果を重視する功利主義、行為そのものを重視する義務論があります。",
+        example: "功利主義：最大多数の最大幸福を目指す。",
+        questions: [
+          { text: "倫理学が扱う問いは？", choices: ["どう生きるべきか", "株価の予測", "天気の予測", "体力の測り方"], correctIndex: 0, explanation: "倫理学は「どう生きるべきか」「何が正しいか」を問います。" },
+          { text: "功利主義が重視するのは？", choices: ["結果（幸福の総量）", "行為の動機", "神の命令", "伝統"], correctIndex: 0, explanation: "功利主義は、結果としての幸福の総量を重視します。" },
+          { text: "義務論の代表的な提唱者は？", choices: ["カント", "ベンサム", "ミル", "アリストテレス"], correctIndex: 0, explanation: "カントは義務論の代表的な哲学者です。" }
+        ]
+      },
+      { id: "existentialism", title: "実存主義", summary: "実存は本質に先立つ", level: "apply",
+        explanation: "実存主義は、人間はまず存在し、その後で自分自身を創り上げていくという立場です。サルトルは「実存は本質に先立つ」と述べ、人間の自由と責任を強調しました。",
+        example: "「人間は自分が作ったものになる」＝自由と責任。",
+        questions: [
+          { text: "実存主義の代表的命題は？", choices: ["実存は本質に先立つ", "本質は実存に先立つ", "神は死んだ", "我思うゆえに我あり"], correctIndex: 0, explanation: "サルトルは「実存は本質に先立つ」と述べました。" },
+          { text: "実存主義を代表する哲学者は？", choices: ["サルトル", "プラトン", "デカルト", "アリストテレス"], correctIndex: 0, explanation: "サルトルは実存主義の代表的な哲学者です。" },
+          { text: "実存主義が強調するのは？", choices: ["自由と責任", "伝統の尊重", "神の絶対性", "暗記の重要性"], correctIndex: 0, explanation: "人間の自由と、それに伴う責任を強調します。" }
+        ]
+      },
+      { id: "epistemology", title: "認識論", summary: "知識とは何か", level: "basic",
+        explanation: "認識論は「知識とは何か」「どうすれば確実に知れるのか」を研究する哲学の分野です。デカルトは「我思う、ゆえに我あり」で、疑い得ない確実な知識を探しました。",
+        example: "「我思う、ゆえに我あり」＝思考する自分の存在は疑えない。",
+        questions: [
+          { text: "認識論が扱うのは？", choices: ["知識とは何か", "料理の仕方", "体力づくり", "株価"], correctIndex: 0, explanation: "認識論は知識の本質や確実性を研究します。" },
+          { text: "「我思う、ゆえに我あり」を唱えたのは？", choices: ["デカルト", "カント", "サルトル", "ニーチェ"], correctIndex: 0, explanation: "デカルトが唱えた命題です。" },
+          { text: "デカルトが探したのは？", choices: ["疑い得ない確実な知識", "最大の利益", "最高の快楽", "最強の武力"], correctIndex: 0, explanation: "すべてを疑った末に、疑い得ない確実な知識を探しました。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 脳科学 ----------
+  {
+    id: "neuroscience", name: "脳科学", emoji: "🧬", group: "自然科学",
+    description: "脳と神経の仕組み、記憶・感情・睡眠を基礎から。",
+    topics: [
+      { id: "neuron", title: "ニューロン", summary: "脳の基本単位", level: "basic",
+        explanation: "ニューロン（神経細胞）は脳の基本単位です。電気信号で情報を伝え、シナプスを介して次のニューロンへと伝えます。ヒトの脳には約860億個のニューロンがあると言われます。",
+        example: "学習によってシナプスの結合が強化される（シナプス可塑性）。",
+        questions: [
+          { text: "ニューロンとは？", choices: ["脳の基本単位の神経細胞", "筋肉の細胞", "血液の細胞", "皮膚の細胞"], correctIndex: 0, explanation: "ニューロンは脳の基本単位である神経細胞です。" },
+          { text: "ニューロン同士の接続部分を何という？", choices: ["シナプス", "ミトコンドリア", "DNA", "ホルモン"], correctIndex: 0, explanation: "ニューロン同士の接続部分をシナプスといいます。" },
+          { text: "学習によるシナプスの変化を何という？", choices: ["シナプス可塑性", "突然変異", "細胞分裂", "進化"], correctIndex: 0, explanation: "学習によりシナプスの結合が変化することをシナプス可塑性といいます。" }
+        ]
+      },
+      { id: "brain-parts", title: "脳の部位", summary: "大脳・小脳・脳幹の役割", level: "basic",
+        explanation: "脳は大きく大脳・小脳・脳幹に分けられます。大脳は思考や記憶、小脳は運動の調整、脳幹は呼吸や心拍など生命維持を担います。",
+        example: "大脳皮質の前頭前野は計画や判断に関わる。",
+        questions: [
+          { text: "思考や記憶を担うのは？", choices: ["大脳", "小脳", "脳幹", "脊髄"], correctIndex: 0, explanation: "大脳は思考や記憶などを担います。" },
+          { text: "運動の調整を担うのは？", choices: ["小脳", "大脳", "脳幹", "心臓"], correctIndex: 0, explanation: "小脳は運動の調整やバランスを担います。" },
+          { text: "呼吸や心拍を担うのは？", choices: ["脳幹", "大脳", "小脳", "胃"], correctIndex: 0, explanation: "脳幹は呼吸や心拍など生命維持を担います。" }
+        ]
+      },
+      { id: "memory-brain", title: "記憶と海馬", summary: "海馬が記憶を整理する", level: "apply",
+        explanation: "海馬は、短期記憶を長期記憶に移す役割を担う部位です。睡眠中に海馬で記憶が整理・固定化されると考えられています。",
+        example: "徹夜で覚えたことは定着しにくく、睡眠をとると定着しやすい。",
+        questions: [
+          { text: "記憶の整理・固定化に重要な部位は？", choices: ["海馬", "小脳", "脳幹", "心臓"], correctIndex: 0, explanation: "海馬は記憶の固定化に重要な役割を担います。" },
+          { text: "記憶の定着に重要なのは？", choices: ["睡眠", "徹夜", "空腹", "運動不足"], correctIndex: 0, explanation: "睡眠中に記憶が整理・定着されると考えられています。" },
+          { text: "海馬が担うのは？", choices: ["短期記憶を長期記憶へ移す", "呼吸", "心拍", "体温調節"], correctIndex: 0, explanation: "海馬は短期記憶を長期記憶に移す役割を担います。" }
+        ]
+      },
+      { id: "dopamine", title: "ドーパミンと報酬", summary: "やる気と報酬の神経伝達物質", level: "apply",
+        explanation: "ドーパミンは、報酬ややる気に関わる神経伝達物質です。何かを達成したときや、報酬が予測されるときに分泌されます。",
+        example: "ゲームの達成感や、目標を達成したときの快感に関与。",
+        questions: [
+          { text: "ドーパミンが関わるのは？", choices: ["報酬ややる気", "血液の凝固", "消化", "体温調節"], correctIndex: 0, explanation: "ドーパミンは報酬ややる気に関わります。" },
+          { text: "ドーパミンが分泌されやすいのは？", choices: ["報酬を得たとき", "寝ているとき", "空腹のとき", "運動不足のとき"], correctIndex: 0, explanation: "報酬を得たときや期待したときに分泌されます。" },
+          { text: "ドーパミンの分類は？", choices: ["神経伝達物質", "ホルモン", "ビタミン", "ミネラル"], correctIndex: 0, explanation: "ドーパミンは神経伝達物質の一種です。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 生物学 ----------
+  {
+    id: "biology", name: "生物学", emoji: "🌱", group: "自然科学",
+    description: "細胞・遺伝・進化など、生命の仕組みを基礎から。",
+    topics: [
+      { id: "cell", title: "細胞", summary: "生命の基本単位", level: "basic",
+        explanation: "細胞は生命の基本単位です。核・ミトコンドリア・細胞膜などを持ち、代謝や増殖を行います。ヒトの体は約37兆個の細胞からできています。",
+        example: "赤血球は酸素運搬、神経細胞は情報伝達を担う。",
+        questions: [
+          { text: "生命の基本単位は？", choices: ["細胞", "原子", "分子", "臓器"], correctIndex: 0, explanation: "細胞は生命の基本単位です。" },
+          { text: "細胞内でエネルギーを作るのは？", choices: ["ミトコンドリア", "核", "細胞膜", "リボソーム"], correctIndex: 0, explanation: "ミトコンドリアはATPを産生するエネルギー工場です。" },
+          { text: "遺伝情報を持つのは？", choices: ["核", "細胞膜", "ミトコンドリア", "ゴルジ体"], correctIndex: 0, explanation: "核にはDNAがあり、遺伝情報を持ちます。" }
+        ]
+      },
+      { id: "dna", title: "DNAと遺伝", summary: "遺伝情報の設計図", level: "basic",
+        explanation: "DNAは遺伝情報を担う物質で、A・T・G・Cの4種類の塩基からなる二重らせん構造です。DNAの情報はRNAを経てタンパク質に翻訳されます。",
+        example: "親から子へ形質が伝わるのはDNAの情報による。",
+        questions: [
+          { text: "DNAの塩基は何種類？", choices: ["2種類", "3種類", "4種類", "5種類"], correctIndex: 2, explanation: "A・T・G・Cの4種類です。" },
+          { text: "DNAの構造は？", choices: ["二重らせん", "一重鎖", "三重らせん", "球状"], correctIndex: 0, explanation: "DNAは二重らせん構造をとります。" },
+          { text: "DNAの情報がタンパク質になる過程を何という？", choices: ["遺伝子発現", "呼吸", "消化", "分裂"], correctIndex: 0, explanation: "DNA→RNA→タンパク質の流れを遺伝子発現といいます。" }
+        ]
+      },
+      { id: "evolution", title: "進化", summary: "自然選択による変化", level: "apply",
+        explanation: "進化は、世代を経て生物の形質が変化することです。ダーウィンは自然選択説を提唱し、環境に適した個体が生き残りやすく、その形質が次世代に伝わると説明しました。",
+        example: "キリンの首が長いのは、高い木の葉を食べるのに有利だったから。",
+        questions: [
+          { text: "ダーウィンが提唱したのは？", choices: ["自然選択説", "相対性理論", "進化論反対", "ビッグバン"], correctIndex: 0, explanation: "ダーウィンは自然選択説を提唱しました。" },
+          { text: "自然選択で生き残りやすいのは？", choices: ["環境に適した個体", "最も弱い個体", "最も怠惰な個体", "ランダムな個体"], correctIndex: 0, explanation: "環境に適した形質を持つ個体が生き残りやすいです。" },
+          { text: "進化とは？", choices: ["世代を経た形質の変化", "個体の急変", "1日の変化", "学習による変化"], correctIndex: 0, explanation: "進化は世代を経た形質の変化です。" }
+        ]
+      },
+      { id: "photosynthesis", title: "光合成", summary: "光で栄養を作る", level: "basic",
+        explanation: "光合成は、植物が光エネルギーを使って二酸化炭素と水から糖と酸素を作る反応です。葉緑体で行われ、地球の酸素の主要な供給源です。",
+        example: "6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂（光エネルギー）。",
+        questions: [
+          { text: "光合成で作られるのは？", choices: ["糖と酸素", "タンパク質と窒素", "脂質と水素", "ビタミンと鉄"], correctIndex: 0, explanation: "光合成では糖と酸素が作られます。" },
+          { text: "光合成を行う器官は？", choices: ["葉緑体", "ミトコンドリア", "核", "細胞膜"], correctIndex: 0, explanation: "葉緑体で光合成が行われます。" },
+          { text: "光合成の材料は？", choices: ["二酸化炭素と水", "酸素と糖", "窒素と水素", "鉄とカルシウム"], correctIndex: 0, explanation: "二酸化炭素と水を材料に光合成が行われます。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 物理学 ----------
+  {
+    id: "physics", name: "物理学", emoji: "⚛️", group: "自然科学",
+    description: "力・エネルギー・電気など、物理の基本を基礎から。",
+    topics: [
+      { id: "newton", title: "ニュートンの運動法則", summary: "力と運動の基本法則", level: "basic",
+        explanation: "ニュートンの運動法則は3つあります。①慣性の法則、②F=ma（運動方程式）、③作用反作用の法則です。これらは古典力学の基礎です。",
+        example: "ボールを押すと加速する（F=ma）。",
+        questions: [
+          { text: "ニュートンの第2法則の式は？", choices: ["F = ma", "E = mc²", "V = IR", "a²+b²=c²"], correctIndex: 0, explanation: "力＝質量×加速度（F=ma）です。" },
+          { text: "「作用があれば反作用がある」は何の法則？", choices: ["第3法則", "第1法則", "第2法則", "万有引力"], correctIndex: 0, explanation: "作用反作用の法則は第3法則です。" },
+          { text: "慣性の法則の内容は？", choices: ["外力がない限り運動を続ける", "力＝質量×加速度", "作用反作用", "エネルギー保存"], correctIndex: 0, explanation: "外力がなければ、物体は等速直線運動を続けます。" }
+        ]
+      },
+      { id: "energy", title: "エネルギー保存", summary: "エネルギーは形を変えて保存される", level: "basic",
+        explanation: "エネルギーは、位置エネルギー・運動エネルギー・熱エネルギーなどに形を変えながら、総量は保存されます。これをエネルギー保存の法則といいます。",
+        example: "振り子は位置エネルギーと運動エネルギーを交互に変換。",
+        questions: [
+          { text: "エネルギー保存の法則の内容は？", choices: ["総量は保存される", "エネルギーは消える", "力は保存される", "質量は増える"], correctIndex: 0, explanation: "エネルギーは形を変えても総量は保存されます。" },
+          { text: "高い所にある物体が持つエネルギーは？", choices: ["位置エネルギー", "運動エネルギー", "熱エネルギー", "電気エネルギー"], correctIndex: 0, explanation: "高い位置にある物体は位置エネルギーを持ちます。" },
+          { text: "振り子で交互に変換されるのは？", choices: ["位置エネルギーと運動エネルギー", "熱と光", "電気と磁気", "音と光"], correctIndex: 0, explanation: "振り子では位置エネルギーと運動エネルギーが交互に変換されます。" }
+        ]
+      },
+      { id: "electricity", title: "電気とオームの法則", summary: "V = IR", level: "apply",
+        explanation: "オームの法則は、電圧V、電流I、抵抗Rの関係を V = IR で表します。電圧が大きいほど電流が増え、抵抗が大きいほど電流が減ります。",
+        example: "抵抗10Ωに電圧5Vをかけると、電流は0.5A。",
+        questions: [
+          { text: "オームの法則の式は？", choices: ["V = IR", "F = ma", "E = mc²", "a²+b²=c²"], correctIndex: 0, explanation: "電圧＝電流×抵抗（V=IR）です。" },
+          { text: "抵抗10Ω、電圧5Vのときの電流は？", choices: ["0.5A", "2A", "5A", "50A"], correctIndex: 0, explanation: "I = V/R = 5/10 = 0.5Aです。" },
+          { text: "抵抗が大きいほど電流は？", choices: ["小さくなる", "大きくなる", "変わらない", "ゼロになる"], correctIndex: 0, explanation: "抵抗が大きいほど電流は流れにくくなります。" }
+        ]
+      },
+      { id: "relativity", title: "相対性理論", summary: "時間と空間は伸び縮みする", level: "apply",
+        explanation: "アインシュタインの相対性理論は、時間と空間が観測者によって変化することを示しました。特殊相対性理論では光速が不変で、高速では時間が遅れます。一般相対性理論では重力を空間の歪みとして説明します。",
+        example: "GPS衛星の時計は、相対論的効果を補正している。",
+        questions: [
+          { text: "相対性理論を提唱したのは？", choices: ["アインシュタイン", "ニュートン", "ガリレオ", "ダーウィン"], correctIndex: 0, explanation: "アインシュタインが提唱しました。" },
+          { text: "特殊相対性理論で不変なのは？", choices: ["光速", "時間", "空間", "質量"], correctIndex: 0, explanation: "光速は観測者によらず一定です。" },
+          { text: "GPSで相対性理論の補正が必要なのは？", choices: ["衛星の時計がずれるから", "電波が届かないから", "地磁気の影響", "重力がないから"], correctIndex: 0, explanation: "衛星の時計は相対論的効果でずれるため、補正が必要です。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 化学 ----------
+  {
+    id: "chemistry", name: "化学", emoji: "🧪", group: "自然科学",
+    description: "原子・分子・化学反応を基礎から。",
+    topics: [
+      { id: "atom", title: "原子と分子", summary: "物質の基本構成", level: "basic",
+        explanation: "原子は物質を構成する基本単位で、陽子・中性子・電子からなります。分子は複数の原子が結合したものです。",
+        example: "水H₂Oは水素2原子と酸素1原子からなる分子。",
+        questions: [
+          { text: "原子を構成するのは？", choices: ["陽子・中性子・電子", "陽子だけ", "電子だけ", "中性子だけ"], correctIndex: 0, explanation: "原子は陽子・中性子・電子からなります。" },
+          { text: "水の分子式は？", choices: ["H₂O", "CO₂", "O₂", "NaCl"], correctIndex: 0, explanation: "水はH₂Oです。" },
+          { text: "分子とは？", choices: ["複数の原子が結合したもの", "1つの原子", "陽子の集まり", "電子の集まり"], correctIndex: 0, explanation: "分子は複数の原子が結合したものです。" }
+        ]
+      },
+      { id: "periodic", title: "元素周期表", summary: "元素を性質ごとに整理", level: "basic",
+        explanation: "元素周期表は、元素を原子番号順に並べ、性質が似たものを縦にそろえた表です。メンデレーエフが原型を作りました。",
+        example: "アルカリ金属（Na, K）は反応性が高い。",
+        questions: [
+          { text: "元素周期表を原型を作ったのは？", choices: ["メンデレーエフ", "アインシュタイン", "ダーウィン", "ニュートン"], correctIndex: 0, explanation: "メンデレーエフが周期表の原型を作りました。" },
+          { text: "周期表で縦に並ぶ元素は？", choices: ["性質が似ている", "全く無関係", "同じ質量", "同じ色"], correctIndex: 0, explanation: "縦の列（族）は性質が似ています。" },
+          { text: "アルカリ金属の特徴は？", choices: ["反応性が高い", "反応しない", "気体", "放射性"], correctIndex: 0, explanation: "アルカリ金属は反応性が高いです。" }
+        ]
+      },
+      { id: "acid-base", title: "酸と塩基", summary: "pHで決まる性質", level: "basic",
+        explanation: "酸は水素イオンを放出し、塩基は水酸化物イオンを放出します。pHは0〜14で、7が中性、7未満が酸性、7より大きいと塩基性です。",
+        example: "レモン汁はpH約2の酸性、石けん水はpH約10の塩基性。",
+        questions: [
+          { text: "pH7の液性は？", choices: ["中性", "酸性", "塩基性", "強酸性"], correctIndex: 0, explanation: "pH7は中性です。" },
+          { text: "酸性の性質は？", choices: ["pHが7未満", "pHが7", "pHが7より大きい", "pHが14"], correctIndex: 0, explanation: "酸性はpHが7未満です。" },
+          { text: "石けん水の性質は？", choices: ["塩基性", "酸性", "中性", "強酸性"], correctIndex: 0, explanation: "石けん水はpH約10の塩基性です。" }
+        ]
+      },
+      { id: "chemical-reaction", title: "化学反応", summary: "物質が別の物質に変わる", level: "apply",
+        explanation: "化学反応は、原子の組み合わせが変わり、別の物質ができる現象です。質量保存の法則により、反応前後で原子の総数は変わりません。",
+        example: "水素＋酸素→水（2H₂ + O₂ → 2H₂O）。",
+        questions: [
+          { text: "化学反応で変わらないのは？", choices: ["原子の総数", "分子の種類", "色", "状態"], correctIndex: 0, explanation: "質量保存の法則により、原子の総数は変わりません。" },
+          { text: "2H₂ + O₂ → 2H₂O は何の反応？", choices: ["水素の燃焼", "中和", "酸化還元", "電離"], correctIndex: 0, explanation: "水素が燃えて水ができる燃焼反応です。" },
+          { text: "化学反応の例は？", choices: ["鉄がさびる", "氷が溶ける", "水が蒸発する", "紙を破る"], correctIndex: 0, explanation: "鉄がさびるのは化学反応です（酸化）。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 歴史 ----------
+  {
+    id: "history", name: "歴史", emoji: "🏛️", group: "人文・社会",
+    description: "世界と日本の歴史を基礎から。",
+    topics: [
+      { id: "civilization", title: "古代文明", summary: "四大文明の誕生", level: "basic",
+        explanation: "四大文明（メソポタミア・エジプト・インダス・黄河）は、大河のほとりで発展しました。農業・文字・都市・国家が生まれました。",
+        example: "メソポタミアの楔形文字、エジプトのヒエログリフ。",
+        questions: [
+          { text: "四大文明に含まれないのは？", choices: ["ローマ文明", "メソポタミア文明", "エジプト文明", "インダス文明"], correctIndex: 0, explanation: "四大文明はメソポタミア・エジプト・インダス・黄河です。" },
+          { text: "文明が発展した場所は？", choices: ["大河のほとり", "砂漠の真ん中", "高山の頂上", "海の底"], correctIndex: 0, explanation: "四大文明は大河のほとりで発展しました。" },
+          { text: "エジプトで使われた文字は？", choices: ["ヒエログリフ", "楔形文字", "漢字", "アルファベット"], correctIndex: 0, explanation: "エジプトではヒエログリフ（象形文字）が使われました。" }
+        ]
+      },
+      { id: "meiji", title: "明治維新", summary: "日本の近代化の始まり", level: "basic",
+        explanation: "明治維新は1868年、江戸幕府が倒れ、明治政府が成立した変革です。富国強兵・殖産興業を掲げ、日本の近代化が進みました。",
+        example: "学制・徴兵令・地租改正などの改革が行われた。",
+        questions: [
+          { text: "明治維新が起きたのは何年？", choices: ["1868年", "1603年", "1945年", "1789年"], correctIndex: 0, explanation: "1868年に明治維新が起こりました。" },
+          { text: "明治政府のスローガンは？", choices: ["富国強兵", "自由平等", "鎖国", "享楽主義"], correctIndex: 0, explanation: "富国強兵・殖産興業を掲げました。" },
+          { text: "明治維新で倒れたのは？", choices: ["江戸幕府", "明治政府", "鎌倉幕府", "室町幕府"], correctIndex: 0, explanation: "江戸幕府が倒れ、明治政府が成立しました。" }
+        ]
+      },
+      { id: "world-war", title: "世界大戦", summary: "20世紀の二大戦争", level: "apply",
+        explanation: "第一次世界大戦（1914-1918）と第二次世界大戦（1939-1945）は、世界を巻き込んだ大規模戦争です。第二次大戦後、国際連合が設立されました。",
+        example: "第二次大戦後、冷戦が始まり、東西対立が続いた。",
+        questions: [
+          { text: "第一次世界大戦の期間は？", choices: ["1914-1918", "1939-1945", "1868-1873", "1789-1799"], correctIndex: 0, explanation: "第一次世界大戦は1914〜1918年です。" },
+          { text: "第二次世界大戦後に設立されたのは？", choices: ["国際連合", "国際連盟", "EU", "NATO"], correctIndex: 0, explanation: "第二次大戦後に国際連合が設立されました。" },
+          { text: "第二次世界大戦の期間は？", choices: ["1939-1945", "1914-1918", "1868-1873", "1789-1799"], correctIndex: 0, explanation: "第二次世界大戦は1939〜1945年です。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 地理 ----------
+  {
+    id: "geography", name: "地理", emoji: "🗺️", group: "人文・社会",
+    description: "地形・気候・地域の特色を基礎から。",
+    topics: [
+      { id: "climate", title: "気候区分", summary: "気温と降水量で分類", level: "basic",
+        explanation: "ケッペンの気候区分は、気温と降水量をもとに世界の気候を分類します。熱帯・乾燥帯・温帯・冷帯・寒帯の5つが基本です。",
+        example: "日本は温暖湿潤気候（温帯）に分類される。",
+        questions: [
+          { text: "ケッペンの気候区分の基本は？", choices: ["熱帯・乾燥帯・温帯・冷帯・寒帯", "春夏秋冬", "東西南北", "海陸"], correctIndex: 0, explanation: "5つの基本区分があります。" },
+          { text: "日本の気候は？", choices: ["温暖湿潤気候", "熱帯", "寒帯", "砂漠気候"], correctIndex: 0, explanation: "日本は温暖湿潤気候に分類されます。" },
+          { text: "気候区分の基準は？", choices: ["気温と降水量", "人口", "面積", "言語"], correctIndex: 0, explanation: "気温と降水量をもとに分類します。" }
+        ]
+      },
+      { id: "plate-tectonics", title: "プレートテクトニクス", summary: "大陸移動と地震", level: "apply",
+        explanation: "地球の表面は複数のプレートに分かれ、動いています。プレートの境界では地震や火山活動が起こります。日本は4つのプレートがぶつかる場所にあります。",
+        example: "日本列島はプレートの境界に位置し、地震が多い。",
+        questions: [
+          { text: "地震が多く起こる場所は？", choices: ["プレートの境界", "大陸の中心", "海の底", "砂漠"], correctIndex: 0, explanation: "プレート境界では地震や火山活動が活発です。" },
+          { text: "日本付近にあるプレートの数は？", choices: ["4つ", "1つ", "2つ", "10つ"], correctIndex: 0, explanation: "日本付近には4つのプレートがあります。" },
+          { text: "プレートテクトニクスが説明するのは？", choices: ["大陸移動や地震", "天気", "言語", "経済"], correctIndex: 0, explanation: "プレートの動きで大陸移動や地震を説明します。" }
+        ]
+      },
+      { id: "population", title: "人口分布", summary: "世界の人口の偏り", level: "basic",
+        explanation: "世界の人口は、中国・インドなどのアジアに集中しています。人口密度は地形や気候、産業に影響されます。",
+        example: "インドは2023年に中国を抜いて世界一の人口に。",
+        questions: [
+          { text: "人口が多い地域は？", choices: ["アジア", "アフリカ", "南極", "オセアニア"], correctIndex: 0, explanation: "中国・インドなどアジアに人口が集中しています。" },
+          { text: "2023年に世界一の人口になった国は？", choices: ["インド", "中国", "アメリカ", "インドネシア"], correctIndex: 0, explanation: "インドが中国を抜いて世界一になりました。" },
+          { text: "人口密度に影響するのは？", choices: ["地形や気候", "言語", "宗教", "通貨"], correctIndex: 0, explanation: "地形や気候、産業が人口密度に影響します。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 政治 ----------
+  {
+    id: "politics", name: "政治", emoji: "🏛️", group: "人文・社会",
+    description: "民主主義・憲法・選挙など、政治の基本を基礎から。",
+    topics: [
+      { id: "democracy", title: "民主主義", summary: "国民が主権を持つ", level: "basic",
+        explanation: "民主主義は、国民が主権を持ち、政治に参加する仕組みです。選挙で代表を選び、多数決で意思決定します。",
+        example: "日本国憲法は国民主権を三大原則の一つとする。",
+        questions: [
+          { text: "民主主義の基本は？", choices: ["国民主権", "王政", "独裁", "神権"], correctIndex: 0, explanation: "民主主義は国民が主権を持ちます。" },
+          { text: "代表を選ぶ方法は？", choices: ["選挙", "抽選", "世襲", "任命"], correctIndex: 0, explanation: "選挙で代表を選びます。" },
+          { text: "日本国憲法の三大原則に含まれないのは？", choices: ["王権神授", "国民主権", "基本的人権の尊重", "平和主義"], correctIndex: 0, explanation: "三大原則は国民主権・基本的人権の尊重・平和主義です。" }
+        ]
+      },
+      { id: "constitution", title: "日本国憲法", summary: "国の最高法規", level: "basic",
+        explanation: "日本国憲法は1947年に施行された国の最高法規です。国民主権・基本的人権の尊重・平和主義の三大原則があります。",
+        example: "憲法改正には国会の3分の2以上の賛成と国民投票が必要。",
+        questions: [
+          { text: "日本国憲法が施行されたのは？", choices: ["1947年", "1868年", "1945年", "1889年"], correctIndex: 0, explanation: "1947年5月3日に施行されました。" },
+          { text: "憲法改正に必要な国民投票の条件は？", choices: ["過半数の賛成", "3分の2の賛成", "全員の賛成", "不要"], correctIndex: 0, explanation: "国民投票で過半数の賛成が必要です。" },
+          { text: "憲法の三大原則に含まれないのは？", choices: ["資本主義", "国民主権", "基本的人権の尊重", "平和主義"], correctIndex: 0, explanation: "三大原則は国民主権・基本的人権の尊重・平和主義です。" }
+        ]
+      },
+      { id: "election", title: "選挙の仕組み", summary: "代表を選ぶ制度", level: "apply",
+        explanation: "選挙は、有権者が代表者を選ぶ制度です。日本では18歳以上が選挙権を持ち、衆議院は小選挙区比例代表並立制、参議院は選挙区制と比例代表制です。",
+        example: "衆議院は小選挙区と比例代表の並立制。",
+        questions: [
+          { text: "日本の選挙権は何歳から？", choices: ["18歳", "20歳", "16歳", "25歳"], correctIndex: 0, explanation: "2016年から18歳以上に選挙権があります。" },
+          { text: "衆議院の選挙制度は？", choices: ["小選挙区比例代表並立制", "比例代表のみ", "中選挙区制", "抽選制"], correctIndex: 0, explanation: "衆議院は小選挙区比例代表並立制です。" },
+          { text: "選挙の目的は？", choices: ["代表者を選ぶ", "税金を決める", "憲法を改正する", "裁判をする"], correctIndex: 0, explanation: "有権者が代表者を選ぶのが選挙です。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 経済学 ----------
+  {
+    id: "economics", name: "経済学", emoji: "📈", group: "人文・社会",
+    description: "需要と供給・市場・GDPなど、経済の基本を基礎から。",
+    topics: [
+      { id: "supply-demand", title: "需要と供給", summary: "価格は需給で決まる", level: "basic",
+        explanation: "需要と供給のバランスで価格が決まります。需要が増えると価格は上がり、供給が増えると価格は下がります。",
+        example: "人気商品は需要が高く価格が上がりやすい。",
+        questions: [
+          { text: "需要が増えると価格は？", choices: ["上がる", "下がる", "変わらない", "ゼロ"], correctIndex: 0, explanation: "需要が増えると価格は上がりやすいです。" },
+          { text: "供給が増えると価格は？", choices: ["下がる", "上がる", "変わらない", "倍"], correctIndex: 0, explanation: "供給が増えると価格は下がりやすいです。" },
+          { text: "価格を決めるのは？", choices: ["需要と供給", "人口", "言語", "天気"], correctIndex: 0, explanation: "需要と供給のバランスで価格が決まります。" }
+        ]
+      },
+      { id: "gdp", title: "GDP", summary: "国の経済規模", level: "basic",
+        explanation: "GDP（国内総生産）は、一定期間に国内で生産された財・サービスの総額です。国の経済規模を測る指標として使われます。",
+        example: "日本のGDPは世界でも上位。",
+        questions: [
+          { text: "GDPとは？", choices: ["国内総生産", "国内総人口", "国民総幸福", "国内総資産"], correctIndex: 0, explanation: "GDPは国内総生産です。" },
+          { text: "GDPで測れるのは？", choices: ["経済規模", "人口", "面積", "言語"], correctIndex: 0, explanation: "GDPは経済規模を測る指標です。" },
+          { text: "GDPに含まれるのは？", choices: ["国内で生産された財・サービス", "海外の生産", "輸入だけ", "株の売買"], correctIndex: 0, explanation: "国内で生産された財・サービスの総額です。" }
+        ]
+      },
+      { id: "inflation-econ", title: "インフレと政策", summary: "物価と金融政策", level: "apply",
+        explanation: "インフレは物価が上がり続ける状態です。中央銀行は金利を上げてインフレを抑えようとします。逆にデフレでは金利を下げて景気を刺激します。",
+        example: "日銀は物価目標2%を掲げて金融政策を行う。",
+        questions: [
+          { text: "インフレを抑える政策は？", choices: ["金利を上げる", "金利を下げる", "税金を下げる", "給付金を増やす"], correctIndex: 0, explanation: "金利を上げると消費や投資が抑えられ、インフレが抑えられます。" },
+          { text: "デフレ時に取る政策は？", choices: ["金利を下げる", "金利を上げる", "税金を上げる", "支出を減らす"], correctIndex: 0, explanation: "金利を下げて景気を刺激します。" },
+          { text: "金融政策を行うのは？", choices: ["中央銀行", "政府", "企業", "家計"], correctIndex: 0, explanation: "中央銀行（日本では日銀）が金融政策を行います。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 法律 ----------
+  {
+    id: "law", name: "法律", emoji: "⚖️", group: "人文・社会",
+    description: "法の基本・憲法・民法・刑法を基礎から。",
+    topics: [
+      { id: "rule-of-law", title: "法の支配", summary: "権力も法に従う", level: "basic",
+        explanation: "法の支配は、権力者も法に従うべきという原則です。対して「人の支配」は権力者の恣意的な判断で統治することを指します。",
+        example: "政治家も法律違反で裁かれる。",
+        questions: [
+          { text: "法の支配の意味は？", choices: ["権力者も法に従う", "権力者が法を作る", "法は無視してよい", "多数決がすべて"], correctIndex: 0, explanation: "権力者も法に従うのが法の支配です。" },
+          { text: "法の支配の反対は？", choices: ["人の支配", "神の支配", "多数決", "民主主義"], correctIndex: 0, explanation: "権力者の恣意的な支配を人の支配といいます。" },
+          { text: "法の支配が重要なのは？", choices: ["権力の濫用を防ぐため", "税収を増やすため", "人口を増やすため", "天気を変えるため"], correctIndex: 0, explanation: "権力の濫用を防ぎ、公正な社会を守るためです。" }
+        ]
+      },
+      { id: "civil-criminal", title: "民事と刑事", summary: "民法と刑法の違い", level: "basic",
+        explanation: "民事は私人間の争いを扱い、民法などが適用されます。刑事は犯罪を扱い、刑法などが適用され、罰則が科されます。",
+        example: "借金のトラブルは民事、窃盗は刑事。",
+        questions: [
+          { text: "民事が扱うのは？", choices: ["私人間の争い", "犯罪", "憲法改正", "選挙"], correctIndex: 0, explanation: "民事は私人間の争いを扱います。" },
+          { text: "刑事が扱うのは？", choices: ["犯罪", "契約", "離婚", "相続"], correctIndex: 0, explanation: "刑事は犯罪を扱い、罰則が科されます。" },
+          { text: "窃盗はどちら？", choices: ["刑事", "民事", "両方", "どちらでもない"], correctIndex: 0, explanation: "窃盗は刑法犯なので刑事です。" }
+        ]
+      },
+      { id: "rights", title: "基本的人権", summary: "憲法が保障する権利", level: "apply",
+        explanation: "基本的人権は、憲法が保障する国民の権利です。平等権・自由権・社会権・参政権・請求権などがあります。",
+        example: "表現の自由、教育を受ける権利、選挙権など。",
+        questions: [
+          { text: "基本的人権に含まれないのは？", choices: ["課税権", "平等権", "自由権", "参政権"], correctIndex: 0, explanation: "課税権は国民の権利ではありません。" },
+          { text: "教育を受ける権利は何権？", choices: ["社会権", "自由権", "参政権", "平等権"], correctIndex: 0, explanation: "教育を受ける権利は社会権に含まれます。" },
+          { text: "選挙権は何権？", choices: ["参政権", "社会権", "自由権", "平等権"], correctIndex: 0, explanation: "選挙権は参政権に含まれます。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 情報科学 ----------
+  {
+    id: "infoscience", name: "情報科学", emoji: "💻", group: "自然科学",
+    description: "コンピュータ・アルゴリズム・ネットワークを基礎から。",
+    topics: [
+      { id: "binary", title: "2進数", summary: "コンピュータの数の表し方", level: "basic",
+        explanation: "コンピュータは0と1の2進数で情報を扱います。2進数の1010は10進数で10です。",
+        example: "10進数の10 → 2進数の1010。",
+        questions: [
+          { text: "2進数の1010は10進数で？", choices: ["8", "10", "12", "16"], correctIndex: 1, explanation: "1×8 + 0×4 + 1×2 + 0×1 = 10です。" },
+          { text: "コンピュータが扱う数は？", choices: ["2進数", "10進数", "16進数のみ", "8進数のみ"], correctIndex: 0, explanation: "コンピュータは0と1の2進数で情報を扱います。" },
+          { text: "2進数の110は10進数で？", choices: ["4", "6", "8", "10"], correctIndex: 1, explanation: "1×4 + 1×2 + 0×1 = 6です。" }
+        ]
+      },
+      { id: "algorithm", title: "アルゴリズム", summary: "問題を解く手順", level: "basic",
+        explanation: "アルゴリズムは、問題を解くための明確な手順です。代表例に線形探索・二分探索・ソートなどがあります。",
+        example: "辞書で単語を探すとき、真ん中から開くのが二分探索。",
+        questions: [
+          { text: "アルゴリズムとは？", choices: ["問題を解く手順", "コンピュータの部品", "ネットワークの種類", "プログラミング言語"], correctIndex: 0, explanation: "アルゴリズムは問題を解くための手順です。" },
+          { text: "効率の良い探索法は？", choices: ["二分探索", "線形探索", "ランダム探索", "全探索"], correctIndex: 0, explanation: "ソート済みデータには二分探索が効率的です。" },
+          { text: "ソートとは？", choices: ["並べ替え", "探索", "圧縮", "暗号化"], correctIndex: 0, explanation: "ソートはデータを一定の順に並べ替えることです。" }
+        ]
+      },
+      { id: "network", title: "ネットワーク", summary: "インターネットの仕組み", level: "apply",
+        explanation: "インターネットは、IPアドレスで機器を識別し、TCP/IPプロトコルで通信します。WebはHTTP/HTTPSでデータをやり取りします。",
+        example: "URLを入力すると、DNSでIPアドレスに変換され、Webサーバーに接続。",
+        questions: [
+          { text: "機器を識別するのは？", choices: ["IPアドレス", "URL", "Cookie", "HTML"], correctIndex: 0, explanation: "IPアドレスでネットワーク上の機器を識別します。" },
+          { text: "Webで使われるプロトコルは？", choices: ["HTTP/HTTPS", "FTP", "SMTP", "SSH"], correctIndex: 0, explanation: "WebはHTTP/HTTPSで通信します。" },
+          { text: "URLをIPアドレスに変換する仕組みは？", choices: ["DNS", "DHCP", "FTP", "VPN"], correctIndex: 0, explanation: "DNSがドメイン名をIPアドレスに変換します。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 統計学 ----------
+  {
+    id: "statistics", name: "統計学", emoji: "📊", group: "自然科学",
+    description: "平均・分散・確率分布を基礎から。",
+    topics: [
+      { id: "mean-var", title: "平均と分散", summary: "データのばらつき", level: "basic",
+        explanation: "平均はデータの中心、分散はデータのばらつきを表します。分散が大きいほどデータは散らばっています。",
+        example: "テストの点が全員70点なら分散0、ばらばらなら分散大。",
+        questions: [
+          { text: "データのばらつきを表すのは？", choices: ["分散", "平均", "中央値", "最頻値"], correctIndex: 0, explanation: "分散はデータのばらつきを表します。" },
+          { text: "分散が大きいと？", choices: ["データが散らばっている", "データが集中している", "平均が大きい", "平均が小さい"], correctIndex: 0, explanation: "分散が大きいほどデータが散らばっています。" },
+          { text: "平均とは？", choices: ["データの中心", "データのばらつき", "最大値", "最小値"], correctIndex: 0, explanation: "平均はデータの中心を表す代表値です。" }
+        ]
+      },
+      { id: "normal-dist", title: "正規分布", summary: "釣り鐘型の分布", level: "apply",
+        explanation: "正規分布は、平均を中心に釣り鐘型に広がる確率分布です。多くの自然現象やテストの点数がこれに従います。",
+        example: "身長やテストの点数は正規分布に近いことが多い。",
+        questions: [
+          { text: "正規分布の形は？", choices: ["釣り鐘型", "直線", "U字", "L字"], correctIndex: 0, explanation: "正規分布は釣り鐘型です。" },
+          { text: "正規分布の中心は？", choices: ["平均", "最大値", "最小値", "中央値のみ"], correctIndex: 0, explanation: "正規分布は平均を中心に対称です。" },
+          { text: "正規分布に従う例は？", choices: ["身長", "サイコロの目", "コインの裏表", "曜日"], correctIndex: 0, explanation: "身長やテストの点数は正規分布に近いことが多いです。" }
+        ]
+      },
+      { id: "correlation", title: "相関と因果", summary: "相関は因果ではない", level: "apply",
+        explanation: "相関は2つのデータの関連の強さを表します。しかし、相関があっても因果関係があるとは限りません。",
+        example: "アイス売上と水難事故は相関するが、因果はない（夏の暑さが共通要因）。",
+        questions: [
+          { text: "相関があると因果がある？", choices: ["限らない", "必ずある", "全くない", "同じ意味"], correctIndex: 0, explanation: "相関があっても因果関係があるとは限りません。" },
+          { text: "交絡因子とは？", choices: ["共通の原因", "相関の強さ", "平均値", "分散"], correctIndex: 0, explanation: "相関の背後にある共通の原因を交絡因子といいます。" },
+          { text: "相関の強さを表す指標は？", choices: ["相関係数", "平均", "分散", "中央値"], correctIndex: 0, explanation: "相関係数は-1〜1で相関の強さを表します。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 医学 ----------
+  {
+    id: "medicine", name: "医学", emoji: "🩺", group: "生活・健康",
+    description: "体の仕組み・病気・健康管理を基礎から。",
+    topics: [
+      { id: "immune", title: "免疫の仕組み", summary: "体を守る防御システム", level: "basic",
+        explanation: "免疫は、病原体から体を守る仕組みです。白血球や抗体が異物を攻撃します。ワクチンは免疫を事前に準備します。",
+        example: "ワクチン接種で抗体を作り、感染症に備える。",
+        questions: [
+          { text: "免疫で病原体を攻撃するのは？", choices: ["白血球", "赤血球", "血小板", "血漿"], correctIndex: 0, explanation: "白血球が病原体を攻撃します。" },
+          { text: "ワクチンの目的は？", choices: ["免疫を事前に準備", "病原体を増やす", "血液を増やす", "骨を強くする"], correctIndex: 0, explanation: "ワクチンは免疫を事前に準備します。" },
+          { text: "抗体を作るのは？", choices: ["免疫系の細胞", "赤血球", "血小板", "肝臓"], correctIndex: 0, explanation: "免疫系の細胞が抗体を作ります。" }
+        ]
+      },
+      { id: "lifestyle", title: "生活習慣病", summary: "生活習慣が原因の病気", level: "basic",
+        explanation: "生活習慣病は、食生活・運動不足・喫煙・飲酒などの生活習慣が原因で起こる病気です。糖尿病・高血圧・脂質異常症などがあります。",
+        example: "運動不足と偏った食事が高血圧や糖尿病のリスクを高める。",
+        questions: [
+          { text: "生活習慣病の例は？", choices: ["糖尿病", "骨折", "風邪", "アレルギー"], correctIndex: 0, explanation: "糖尿病は代表的な生活習慣病です。" },
+          { text: "生活習慣病の原因は？", choices: ["生活習慣", "遺伝のみ", "感染", "事故"], correctIndex: 0, explanation: "食生活・運動不足・喫煙などが原因です。" },
+          { text: "生活習慣病の予防は？", choices: ["バランスの良い食事と運動", "喫煙", "夜更かし", "偏食"], correctIndex: 0, explanation: "バランスの良い食事と適度な運動が予防になります。" }
+        ]
+      },
+      { id: "first-aid", title: "救急の基本", summary: "心肺蘇生とAED", level: "apply",
+        explanation: "心肺蘇生（CPR）は、心停止した人に対して胸骨圧迫と人工呼吸を行う救命処置です。AEDは心臓の電気的ショックを与える機器です。",
+        example: "倒れた人を見たら、119番通報し、AEDを取りに行く。",
+        questions: [
+          { text: "心肺蘇生で行うのは？", choices: ["胸骨圧迫", "肩もみ", "背中を叩く", "水をかける"], correctIndex: 0, explanation: "胸骨圧迫が心肺蘇生の基本です。" },
+          { text: "AEDの目的は？", choices: ["心臓に電気ショックを与える", "血圧を測る", "体温を測る", "呼吸を助ける"], correctIndex: 0, explanation: "AEDは心臓に電気ショックを与える機器です。" },
+          { text: "倒れた人を見たらまず？", choices: ["119番通報とAEDの手配", "そのままにする", "水を飲ませる", "起こして歩かせる"], correctIndex: 0, explanation: "まず119番通報とAEDの手配を行います。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 社会学 ----------
+  {
+    id: "sociology", name: "社会学", emoji: "👥", group: "人文・社会",
+    description: "社会の仕組み・集団・文化を基礎から。",
+    topics: [
+      { id: "social-group", title: "社会集団", summary: "家族・学校・会社", level: "basic",
+        explanation: "社会集団は、共通の目的や関係で結ばれた人の集まりです。家族・学校・会社・地域社会などがあります。",
+        example: "家族は第一次集団、会社は第二次集団。",
+        questions: [
+          { text: "社会集団の例は？", choices: ["家族", "個人", "動物", "天気"], correctIndex: 0, explanation: "家族・学校・会社などが社会集団です。" },
+          { text: "第一次集団の例は？", choices: ["家族", "会社", "国家", "学校"], correctIndex: 0, explanation: "家族は第一次集団の代表例です。" },
+          { text: "第二次集団の例は？", choices: ["会社", "家族", "親友", "恋人"], correctIndex: 0, explanation: "会社は第二次集団の代表例です。" }
+        ]
+      },
+      { id: "culture", title: "文化と規範", summary: "社会のルールと価値観", level: "basic",
+        explanation: "文化は社会が共有する価値観・習慣・言語などです。規範は社会のルールで、法律・道徳・慣習などがあります。",
+        example: "挨拶の仕方や食事マナーは文化の一部。",
+        questions: [
+          { text: "文化に含まれるのは？", choices: ["価値観や習慣", "遺伝子", "天気", "地形"], correctIndex: 0, explanation: "文化は価値観・習慣・言語などを含みます。" },
+          { text: "規範の例は？", choices: ["法律や道徳", "天気", "人口", "地形"], correctIndex: 0, explanation: "法律・道徳・慣習などが規範です。" },
+          { text: "文化を共有するのは？", choices: ["社会の成員", "1人だけ", "動物だけ", "機械だけ"], correctIndex: 0, explanation: "文化は社会の成員が共有します。" }
+        ]
+      },
+      { id: "social-change", title: "社会変動", summary: "社会が変化する要因", level: "apply",
+        explanation: "社会変動は、社会の構造や価値観が変化することです。技術革新・人口変化・グローバル化などが要因になります。",
+        example: "インターネットの普及で働き方や交流が大きく変化。",
+        questions: [
+          { text: "社会変動の要因は？", choices: ["技術革新", "天気", "言語", "宗教のみ"], correctIndex: 0, explanation: "技術革新や人口変化などが社会変動の要因です。" },
+          { text: "社会変動の例は？", choices: ["インターネット普及による変化", "1人の引っ越し", "毎日の食事", "睡眠"], correctIndex: 0, explanation: "インターネットの普及は大きな社会変動の例です。" },
+          { text: "グローバル化が進むと？", choices: ["国際的なつながりが強まる", "国境がなくなる", "言語が1つになる", "人口が減る"], correctIndex: 0, explanation: "グローバル化で国際的なつながりが強まります。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 言語学 ----------
+  {
+    id: "linguistics", name: "言語学", emoji: "🗣️", group: "人文・社会",
+    description: "言語の仕組み・音声・文法を基礎から。",
+    topics: [
+      { id: "phonetics", title: "音声学", summary: "音の仕組み", level: "basic",
+        explanation: "音声学は、言語の音を研究する分野です。子音と母音、調音点や調音法などを分析します。",
+        example: "日本語の「あいうえお」は5つの母音。",
+        questions: [
+          { text: "音声学が研究するのは？", choices: ["言語の音", "文法", "文字", "語彙"], correctIndex: 0, explanation: "音声学は言語の音を研究します。" },
+          { text: "日本語の母音の数は？", choices: ["5つ", "3つ", "8つ", "10つ"], correctIndex: 0, explanation: "日本語の母音は「あいうえお」の5つです。" },
+          { text: "子音と母音の違いは？", choices: ["調音の仕方", "文字の数", "意味", "文法"], correctIndex: 0, explanation: "子音と母音は調音の仕方が異なります。" }
+        ]
+      },
+      { id: "syntax", title: "統語論", summary: "文の構造", level: "apply",
+        explanation: "統語論は、文の構造や語順のルールを研究する分野です。日本語はSOV（主語-目的語-動詞）の語順です。",
+        example: "「私はリンゴを食べる」＝SOV。",
+        questions: [
+          { text: "日本語の基本語順は？", choices: ["SOV", "SVO", "VSO", "OVS"], correctIndex: 0, explanation: "日本語はSOV（主語-目的語-動詞）です。" },
+          { text: "英語の基本語順は？", choices: ["SVO", "SOV", "VSO", "OVS"], correctIndex: 0, explanation: "英語はSVO（主語-動詞-目的語）です。" },
+          { text: "統語論が研究するのは？", choices: ["文の構造", "音", "文字", "意味"], correctIndex: 0, explanation: "統語論は文の構造や語順を研究します。" }
+        ]
+      },
+      { id: "semantics", title: "意味論", summary: "意味の仕組み", level: "apply",
+        explanation: "意味論は、言葉の意味を研究する分野です。単語の意味、文の意味、比喩などを分析します。",
+        example: "「暑い」は気温だけでなく、熱い料理にも使える。",
+        questions: [
+          { text: "意味論が研究するのは？", choices: ["言葉の意味", "音", "文法", "文字"], correctIndex: 0, explanation: "意味論は言葉の意味を研究します。" },
+          { text: "比喩は何論で扱う？", choices: ["意味論", "音声学", "統語論", "文字論"], correctIndex: 0, explanation: "比喩は意味論で扱われます。" },
+          { text: "多義語の例は？", choices: ["「かける」", "「あ」", "「1」", "「+」"], correctIndex: 0, explanation: "「かける」は電話をかける、壁にかけるなど多義語です。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 英語 ----------
+  {
+    id: "english", name: "英語", emoji: "🔤", group: "言語・実用",
+    description: "英文法・語彙・表現を基礎から。",
+    topics: [
+      { id: "be-verb", title: "be動詞", summary: "am/are/is の使い分け", level: "basic",
+        explanation: "be動詞は主語によって形が変わります。I am, you are, he/she/it is, we/they are。",
+        example: "I am a student. / She is a teacher.",
+        questions: [
+          { text: "I ___ a student.", choices: ["am", "is", "are", "be"], correctIndex: 0, explanation: "主語Iにはamを使います。" },
+          { text: "She ___ a teacher.", choices: ["is", "am", "are", "be"], correctIndex: 0, explanation: "三人称単数にはisを使います。" },
+          { text: "They ___ friends.", choices: ["are", "is", "am", "be"], correctIndex: 0, explanation: "複数主語にはareを使います。" }
+        ]
+      },
+      { id: "past-tense", title: "過去形", summary: "動詞の過去形", level: "basic",
+        explanation: "規則動詞は-edをつけて過去形にします。不規則動詞は形が変わります（go→went, eat→ate）。",
+        example: "play → played, go → went。",
+        questions: [
+          { text: "playの過去形は？", choices: ["played", "plaied", "playd", "plays"], correctIndex: 0, explanation: "規則動詞playの過去形はplayedです。" },
+          { text: "goの過去形は？", choices: ["went", "goed", "gone", "goes"], correctIndex: 0, explanation: "goは不規則動詞でwentになります。" },
+          { text: "eatの過去形は？", choices: ["ate", "eated", "eaten", "eats"], correctIndex: 0, explanation: "eatは不規則動詞でateになります。" }
+        ]
+      },
+      { id: "relative", title: "関係代名詞", summary: "who/which/that", level: "apply",
+        explanation: "関係代名詞は、名詞を修飾する節をつなぐ働きをします。人にはwho、物にはwhich、どちらにもthatが使えます。",
+        example: "The man who lives next door is kind.",
+        questions: [
+          { text: "人を修飾する関係代名詞は？", choices: ["who", "which", "what", "where"], correctIndex: 0, explanation: "人にはwhoを使います。" },
+          { text: "物を修飾する関係代名詞は？", choices: ["which", "who", "whose", "whom"], correctIndex: 0, explanation: "物にはwhichを使います。" },
+          { text: "関係代名詞の役割は？", choices: ["名詞を修飾する", "動詞を修飾する", "文を否定する", "時制を変える"], correctIndex: 0, explanation: "関係代名詞は名詞を修飾する節をつなぎます。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 地球科学 ----------
+  {
+    id: "earthscience", name: "地球科学", emoji: "🌏", group: "自然科学",
+    description: "地球の構造・気象・宇宙を基礎から。",
+    topics: [
+      { id: "earth-structure", title: "地球の構造", summary: "地殻・マントル・核", level: "basic",
+        explanation: "地球は地殻・マントル・核（外核・内核）の層構造を持ちます。内核は固体、外核は液体です。",
+        example: "マントルの対流がプレート運動の原動力。",
+        questions: [
+          { text: "地球の層構造は？", choices: ["地殻・マントル・核", "地殻のみ", "核のみ", "マントルのみ"], correctIndex: 0, explanation: "地殻・マントル・核の層構造です。" },
+          { text: "内核の状態は？", choices: ["固体", "液体", "気体", "プラズマ"], correctIndex: 0, explanation: "内核は固体、外核は液体です。" },
+          { text: "プレート運動の原動力は？", choices: ["マントルの対流", "太陽光", "月の引力", "風"], correctIndex: 0, explanation: "マントルの対流がプレート運動を引き起こします。" }
+        ]
+      },
+      { id: "weather", title: "気象", summary: "天気の仕組み", level: "basic",
+        explanation: "気象は、大気の動きによって起こります。気圧・気温・湿度が関係し、低気圧は雨を、高気圧は晴れをもたらしやすいです。",
+        example: "低気圧が近づくと天気が崩れやすい。",
+        questions: [
+          { text: "雨をもたらしやすいのは？", choices: ["低気圧", "高気圧", "無気圧", "等圧"], correctIndex: 0, explanation: "低気圧は上昇気流を生み、雨をもたらしやすいです。" },
+          { text: "晴れをもたらしやすいのは？", choices: ["高気圧", "低気圧", "台風", "前線"], correctIndex: 0, explanation: "高気圧は下降気流で晴れやすいです。" },
+          { text: "気象に関係するのは？", choices: ["気圧・気温・湿度", "言語", "宗教", "人口"], correctIndex: 0, explanation: "気圧・気温・湿度が気象に関係します。" }
+        ]
+      },
+      { id: "solar-system", title: "太陽系", summary: "惑星と太陽", level: "basic",
+        explanation: "太陽系は太陽と8つの惑星、準惑星、小惑星、彗星などからなります。地球は太陽から3番目の惑星です。",
+        example: "水星・金星・地球・火星・木星・土星・天王星・海王星。",
+        questions: [
+          { text: "太陽系の惑星の数は？", choices: ["8", "9", "7", "10"], correctIndex: 0, explanation: "現在は8惑星です（冥王星は準惑星）。" },
+          { text: "太陽から3番目の惑星は？", choices: ["地球", "火星", "金星", "水星"], correctIndex: 0, explanation: "水星・金星・地球の順で、地球は3番目です。" },
+          { text: "太陽系の中心は？", choices: ["太陽", "地球", "月", "木星"], correctIndex: 0, explanation: "太陽系の中心は太陽です。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 芸術 ----------
+  {
+    id: "art", name: "芸術", emoji: "🎨", group: "芸術・文化",
+    description: "美術・音楽・デザインを基礎から。",
+    topics: [
+      { id: "color", title: "色彩理論", summary: "色の組み合わせ", level: "basic",
+        explanation: "色彩理論は、色の関係や組み合わせを研究する分野です。補色・類似色・三原色などの概念があります。",
+        example: "赤と緑は補色同士で、並べると引き立て合う。",
+        questions: [
+          { text: "補色の例は？", choices: ["赤と緑", "赤と青", "白と黒", "黄と赤"], correctIndex: 0, explanation: "赤と緑は補色の関係です。" },
+          { text: "光の三原色は？", choices: ["赤・緑・青", "赤・黄・青", "白・黒・灰", "赤・青・黄"], correctIndex: 0, explanation: "光の三原色は赤・緑・青（RGB）です。" },
+          { text: "類似色の例は？", choices: ["赤とオレンジ", "赤と緑", "白と黒", "青と黄"], correctIndex: 0, explanation: "赤とオレンジは似た色（類似色）です。" }
+        ]
+      },
+      { id: "music-theory", title: "音楽理論", summary: "音階と和音", level: "apply",
+        explanation: "音楽理論は、音階・和音・リズムの仕組みを研究します。ドレミファソラシは長音階の一例です。",
+        example: "Cメジャーコードはド・ミ・ソ。",
+        questions: [
+          { text: "Cメジャーコードの構成音は？", choices: ["ド・ミ・ソ", "ド・レ・ミ", "ド・ファ・ラ", "レ・ファ・ラ"], correctIndex: 0, explanation: "Cメジャーコードはド・ミ・ソです。" },
+          { text: "ドレミファソラシは？", choices: ["長音階", "短音階", "半音階", "無音階"], correctIndex: 0, explanation: "ドレミファソラシは長音階の一例です。" },
+          { text: "音楽理論が扱うのは？", choices: ["音階・和音・リズム", "色", "形", "文字"], correctIndex: 0, explanation: "音階・和音・リズムなどを扱います。" }
+        ]
+      },
+      { id: "design", title: "デザインの基本", summary: "視覚的な情報設計", level: "basic",
+        explanation: "デザインは、情報をわかりやすく美しく伝えるための設計です。余白・整列・コントラスト・反復が基本原則です。",
+        example: "余白を取ることで情報が読みやすくなる。",
+        questions: [
+          { text: "デザインの基本原則に含まれないのは？", choices: ["暗記", "余白", "整列", "コントラスト"], correctIndex: 0, explanation: "余白・整列・コントラスト・反復が基本原則です。" },
+          { text: "余白の役割は？", choices: ["情報を読みやすくする", "情報を増やす", "色を増やす", "文字を増やす"], correctIndex: 0, explanation: "余白は情報を読みやすくします。" },
+          { text: "コントラストの役割は？", choices: ["違いを際立たせる", "同じにする", "色を減らす", "文字を消す"], correctIndex: 0, explanation: "コントラストは違いを際立たせます。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 文学 ----------
+  {
+    id: "literature", name: "文学", emoji: "📖", group: "芸術・文化",
+    description: "小説・詩・批評を基礎から。",
+    topics: [
+      { id: "narrative", title: "物語の構造", summary: "起承転結と三幕構成", level: "basic",
+        explanation: "物語には構造があります。日本では起承転結、西洋では三幕構成（設定・対立・解決）が代表的です。",
+        example: "三幕構成：序盤で世界観、中盤で葛藤、終盤で解決。",
+        questions: [
+          { text: "日本の伝統的な物語構造は？", choices: ["起承転結", "三幕構成", "二幕構成", "四幕構成"], correctIndex: 0, explanation: "日本では起承転結が代表的です。" },
+          { text: "三幕構成の順序は？", choices: ["設定・対立・解決", "解決・設定・対立", "対立・解決・設定", "設定・解決・対立"], correctIndex: 0, explanation: "設定→対立→解決の順です。" },
+          { text: "物語の構造を分析する学問は？", choices: ["物語論", "音声学", "統語論", "色彩理論"], correctIndex: 0, explanation: "物語論（ナラトロジー）が物語の構造を分析します。" }
+        ]
+      },
+      { id: "poetry", title: "詩の基本", summary: "韻律とイメージ", level: "apply",
+        explanation: "詩は、言葉のリズム・韻・イメージを重視する文学形式です。俳句・短歌・自由詩などがあります。",
+        example: "俳句は5-7-5の音数と季語を含む。",
+        questions: [
+          { text: "俳句の音数は？", choices: ["5-7-5", "7-5-7", "5-5-5", "7-7-7"], correctIndex: 0, explanation: "俳句は5-7-5の音数です。" },
+          { text: "俳句に必要なものは？", choices: ["季語", "韻", "行分け", "脚韻"], correctIndex: 0, explanation: "俳句には季語が必要です。" },
+          { text: "自由詩の特徴は？", choices: ["音数や韻律の制約が少ない", "必ず5-7-5", "必ず韻を踏む", "必ず季語を入れる"], correctIndex: 0, explanation: "自由詩は音数や韻律の制約が少ないです。" }
+        ]
+      },
+      { id: "literary-criticism", title: "文学批評", summary: "作品を読み解く視点", level: "apply",
+        explanation: "文学批評は、作品を多角的に読み解く営みです。作者の意図、時代背景、構造、読者の解釈など、様々な視点があります。",
+        example: "同じ作品でも、時代や読者によって解釈が変わる。",
+        questions: [
+          { text: "文学批評の視点に含まれないのは？", choices: ["株価分析", "作者の意図", "時代背景", "構造分析"], correctIndex: 0, explanation: "株価分析は文学批評の視点ではありません。" },
+          { text: "文学批評が扱うのは？", choices: ["作品の多角的な解釈", "株価", "天気", "体力"], correctIndex: 0, explanation: "作品を多角的に読み解くのが文学批評です。" },
+          { text: "解釈が変わる要因は？", choices: ["時代や読者", "文字の色", "紙の重さ", "本の厚さ"], correctIndex: 0, explanation: "時代や読者によって解釈が変わります。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 科学的思考 ----------
+  {
+    id: "scientific-thinking", name: "科学的思考", emoji: "🔬", group: "思考・リテラシー",
+    description: "仮説・検証・批判的思考を基礎から。",
+    topics: [
+      { id: "hypothesis", title: "仮説検証", summary: "科学の基本プロセス", level: "basic",
+        explanation: "科学は、仮説を立てて実験や観察で検証するプロセスです。結果が仮説を支持しなければ、仮説を修正します。",
+        example: "「植物は光で育つ」→ 光あり/なしで比較実験。",
+        questions: [
+          { text: "科学の基本プロセスは？", choices: ["仮説→検証", "暗記→試験", "推測→放置", "多数決→決定"], correctIndex: 0, explanation: "仮説を立てて検証するのが科学の基本です。" },
+          { text: "仮説が支持されなかったら？", choices: ["仮説を修正する", "無視する", "結果を捏造する", "諦める"], correctIndex: 0, explanation: "結果に基づいて仮説を修正します。" },
+          { text: "検証の方法は？", choices: ["実験や観察", "直感", "多数決", "占い"], correctIndex: 0, explanation: "実験や観察で仮説を検証します。" }
+        ]
+      },
+      { id: "critical-thinking", title: "批判的思考", summary: "根拠を吟味する", level: "apply",
+        explanation: "批判的思考は、情報や主張を鵜呑みにせず、根拠や論理を吟味する思考法です。",
+        example: "「みんな言ってる」は根拠にならない。",
+        questions: [
+          { text: "批判的思考の基本は？", choices: ["根拠を吟味する", "鵜呑みにする", "多数決に従う", "直感で決める"], correctIndex: 0, explanation: "根拠や論理を吟味するのが批判的思考です。" },
+          { text: "「みんな言ってる」は？", choices: ["根拠にならない", "強い根拠", "科学的証拠", "法律"], correctIndex: 0, explanation: "「みんな言ってる」は根拠になりません。" },
+          { text: "批判的思考が役立つ場面は？", choices: ["フェイクニュースの判断", "暗記", "体力づくり", "料理"], correctIndex: 0, explanation: "情報の真偽を判断するのに役立ちます。" }
+        ]
+      },
+      { id: "logical-fallacy", title: "論理的誤謬", summary: "詭弁のパターン", level: "apply",
+        explanation: "論理的誤謬は、一見正しそうに見えて実は論理が破綻している推論です。人身攻撃・権威への依存・誤った二分法などがあります。",
+        example: "「お前も間違えたことがあるから、お前の意見は間違い」＝人身攻撃。",
+        questions: [
+          { text: "人身攻撃の誤謬は？", choices: ["相手の人格を攻撃する", "根拠を示す", "データを示す", "反例を示す"], correctIndex: 0, explanation: "相手の人格を攻撃するのは人身攻撃の誤謬です。" },
+          { text: "誤った二分法は？", choices: ["白か黒かだけで考える", "複数の選択肢を示す", "根拠を示す", "反例を示す"], correctIndex: 0, explanation: "選択肢を2つに絞ってしまうのが誤った二分法です。" },
+          { text: "論理的誤謬の例は？", choices: ["権威に依存する", "データを示す", "実験する", "比較する"], correctIndex: 0, explanation: "権威に依存する推論は誤謬の一つです。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 生活力 ----------
+  {
+    id: "life-skills", name: "生活力", emoji: "🏠", group: "生活・健康",
+    description: "料理・掃除・家計・時間管理を基礎から。",
+    topics: [
+      { id: "cooking", title: "料理の基本", summary: "火加減と調味料", level: "basic",
+        explanation: "料理の基本は、食材の切り方・火加減・調味料のバランスです。「さしすせそ」（砂糖・塩・酢・醤油・味噌）の順で味を決めると失敗しにくいです。",
+        example: "肉じゃが：砂糖→塩→醤油の順で味を決める。",
+        questions: [
+          { text: "「さしすせそ」に含まれないのは？", choices: ["ソース", "砂糖", "塩", "酢"], correctIndex: 0, explanation: "さしすせそは砂糖・塩・酢・醤油・味噌です。" },
+          { text: "料理の基本に含まれるのは？", choices: ["火加減", "株価", "天気", "人口"], correctIndex: 0, explanation: "火加減は料理の基本です。" },
+          { text: "味を決める順番は？", choices: ["砂糖→塩→醤油", "醤油→砂糖→塩", "塩→醤油→砂糖", "酢→砂糖→塩"], correctIndex: 0, explanation: "砂糖→塩→醤油の順で味を決めると失敗しにくいです。" }
+        ]
+      },
+      { id: "money-management", title: "家計管理", summary: "収入と支出のバランス", level: "basic",
+        explanation: "家計管理は、収入と支出を把握し、バランスを取ることです。固定費（家賃・通信費）を抑えると貯金しやすくなります。",
+        example: "毎月の支出を記録し、固定費を見直す。",
+        questions: [
+          { text: "家計管理の基本は？", choices: ["収入と支出の把握", "借金を増やす", "支出を無視する", "収入だけ見る"], correctIndex: 0, explanation: "収入と支出を把握することが基本です。" },
+          { text: "固定費の例は？", choices: ["家賃", "食費", "交際費", "娯楽費"], correctIndex: 0, explanation: "家賃は毎月一定の固定費です。" },
+          { text: "貯金しやすくするには？", choices: ["固定費を抑える", "固定費を増やす", "収入を減らす", "支出を増やす"], correctIndex: 0, explanation: "固定費を抑えると貯金しやすくなります。" }
+        ]
+      },
+      { id: "time-management", title: "時間管理", summary: "優先順位とスケジュール", level: "apply",
+        explanation: "時間管理は、限られた時間を有効に使う技術です。優先順位をつけ、締め切りから逆算して計画を立てます。",
+        example: "緊急度×重要度のマトリクスでタスクを整理。",
+        questions: [
+          { text: "時間管理の基本は？", choices: ["優先順位をつける", "全部同時にやる", "締め切りを無視する", "計画を立てない"], correctIndex: 0, explanation: "優先順位をつけるのが時間管理の基本です。" },
+          { text: "計画を立てるときは？", choices: ["締め切りから逆算", "行き当たりばったり", "他人任せ", "計画なし"], correctIndex: 0, explanation: "締め切りから逆算して計画を立てます。" },
+          { text: "タスク整理に使うフレームワークは？", choices: ["緊急度×重要度マトリクス", "PDCA", "SWOT", "5W1H"], correctIndex: 0, explanation: "緊急度×重要度のマトリクスでタスクを整理します。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 健康管理 ----------
+  {
+    id: "health", name: "健康管理", emoji: "💪", group: "生活・健康",
+    description: "食事・運動・睡眠を基礎から。",
+    topics: [
+      { id: "nutrition", title: "栄養バランス", summary: "五大栄養素", level: "basic",
+        explanation: "五大栄養素は、炭水化物・タンパク質・脂質・ビタミン・ミネラルです。バランスよく摂ることが健康の基本です。",
+        example: "主食・主菜・副菜をそろえるとバランスが良い。",
+        questions: [
+          { text: "五大栄養素に含まれないのは？", choices: ["食物繊維", "炭水化物", "タンパク質", "脂質"], correctIndex: 0, explanation: "五大栄養素は炭水化物・タンパク質・脂質・ビタミン・ミネラルです。" },
+          { text: "筋肉や皮膚を作るのは？", choices: ["タンパク質", "炭水化物", "脂質", "ビタミン"], correctIndex: 0, explanation: "タンパク質は筋肉や皮膚の材料になります。" },
+          { text: "バランスの良い食事は？", choices: ["主食・主菜・副菜", "主食のみ", "肉のみ", "野菜のみ"], correctIndex: 0, explanation: "主食・主菜・副菜をそろえるとバランスが良いです。" }
+        ]
+      },
+      { id: "exercise", title: "運動の効果", summary: "有酸素運動と筋トレ", level: "basic",
+        explanation: "運動には、有酸素運動（ウォーキング・ジョギング）と無酸素運動（筋トレ）があります。有酸素運動は心肺機能を、筋トレは筋力と代謝を高めます。",
+        example: "週150分の中強度の有酸素運動が推奨される。",
+        questions: [
+          { text: "有酸素運動の例は？", choices: ["ウォーキング", "スクワット", "ベンチプレス", "腕立て伏せ"], correctIndex: 0, explanation: "ウォーキングは有酸素運動です。" },
+          { text: "筋トレの効果は？", choices: ["筋力と代謝を高める", "心肺機能を下げる", "体重を増やすだけ", "睡眠を減らす"], correctIndex: 0, explanation: "筋トレは筋力と代謝を高めます。" },
+          { text: "推奨される有酸素運動の時間は？", choices: ["週150分", "週10分", "週30分", "週500分"], correctIndex: 0, explanation: "週150分の中強度の有酸素運動が推奨されます。" }
+        ]
+      },
+      { id: "sleep", title: "睡眠の質", summary: "睡眠の役割と改善", level: "apply",
+        explanation: "睡眠は、記憶の定着・ホルモン分泌・体の回復に重要です。7〜9時間が推奨され、規則正しい生活と寝る前のスマホ控えが質を高めます。",
+        example: "寝る1時間前はスマホを控え、部屋を暗くする。",
+        questions: [
+          { text: "睡眠の役割に含まれないのは？", choices: ["株価の予測", "記憶の定着", "ホルモン分泌", "体の回復"], correctIndex: 0, explanation: "睡眠は記憶の定着・ホルモン分泌・体の回復に重要です。" },
+          { text: "推奨される睡眠時間は？", choices: ["7〜9時間", "3〜4時間", "12時間", "5時間"], correctIndex: 0, explanation: "成人は7〜9時間が推奨されます。" },
+          { text: "睡眠の質を高めるには？", choices: ["寝る前のスマホを控える", "寝る前にコーヒー", "夜更かし", "明るい部屋"], correctIndex: 0, explanation: "寝る前のスマホを控えると睡眠の質が高まります。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 防災 ----------
+  {
+    id: "disaster", name: "防災", emoji: "🚨", group: "生活・健康",
+    description: "地震・台風・避難を基礎から。",
+    topics: [
+      { id: "earthquake", title: "地震対策", summary: "備えと避難", level: "basic",
+        explanation: "地震対策は、家具の固定・非常持ち出し袋の準備・避難経路の確認が基本です。揺れたら机の下に入り、頭を守ります。",
+        example: "家具をL字金具で壁に固定する。",
+        questions: [
+          { text: "地震のときまずするのは？", choices: ["机の下に入り頭を守る", "外に飛び出す", "エレベーターに乗る", "電話する"], correctIndex: 0, explanation: "揺れたら机の下に入り頭を守ります。" },
+          { text: "地震対策に含まれないのは？", choices: ["株の売買", "家具の固定", "非常持ち出し袋", "避難経路の確認"], correctIndex: 0, explanation: "家具の固定・非常持ち出し袋・避難経路の確認が基本です。" },
+          { text: "非常持ち出し袋に入れるものは？", choices: ["水・食料・懐中電灯", "ゲーム機", "大量の本", "家具"], correctIndex: 0, explanation: "水・食料・懐中電灯などが基本です。" }
+        ]
+      },
+      { id: "typhoon", title: "台風対策", summary: "早めの備え", level: "basic",
+        explanation: "台風対策は、最新の気象情報の確認・窓の補強・停電への備えが基本です。不要な外出は控え、避難指示が出たら従います。",
+        example: "台風接近前に水や食料を備蓄し、窓にテープを貼る。",
+        questions: [
+          { text: "台風対策の基本は？", choices: ["気象情報の確認", "外出する", "窓を開ける", "海に行く"], correctIndex: 0, explanation: "最新の気象情報の確認が基本です。" },
+          { text: "避難指示が出たら？", choices: ["従って避難する", "無視する", "様子を見る", "旅行に行く"], correctIndex: 0, explanation: "避難指示が出たら従って避難します。" },
+          { text: "停電への備えは？", choices: ["懐中電灯とモバイルバッテリー", "テレビ", "エアコン", "電子レンジ"], correctIndex: 0, explanation: "懐中電灯やモバイルバッテリーを準備します。" }
+        ]
+      },
+      { id: "evacuation", title: "避難の基本", summary: "避難所と経路", level: "apply",
+        explanation: "避難は、あらかじめ避難所と経路を確認しておくことが重要です。ハザードマップで危険区域を把握し、家族との連絡方法も決めておきます。",
+        example: "自治体のハザードマップで自宅の浸水リスクを確認。",
+        questions: [
+          { text: "避難の準備として重要なのは？", choices: ["避難所と経路の確認", "旅行の計画", "株の売買", "ゲームの購入"], correctIndex: 0, explanation: "避難所と経路を事前に確認しておくことが重要です。" },
+          { text: "危険区域を把握するのに使うのは？", choices: ["ハザードマップ", "カレンダー", "レシピ", "地図帳のみ"], correctIndex: 0, explanation: "ハザードマップで危険区域を把握します。" },
+          { text: "家族との連絡方法は？", choices: ["事前に決めておく", "当日考える", "決めない", "連絡しない"], correctIndex: 0, explanation: "家族との連絡方法を事前に決めておきます。" }
+        ]
+      }
+    ]
+  },
+
+  // ---------- 情報リテラシー ----------
+  {
+    id: "info-literacy", name: "情報リテラシー", emoji: "🛡️", group: "思考・リテラシー",
+    description: "情報の見極め・セキュリティ・SNSを基礎から。",
+    topics: [
+      { id: "fake-news", title: "フェイクニュース", summary: "情報の真偽を見極める", level: "basic",
+        explanation: "フェイクニュースは、意図的に作られた虚偽の情報です。発信元の確認・複数ソースの比較・日付の確認が真偽を見極める基本です。",
+        example: "SNSで拡散された情報は、一次ソースを確認する。",
+        questions: [
+          { text: "フェイクニュースを見極めるには？", choices: ["発信元を確認する", "すぐ拡散する", "信じる", "無視する"], correctIndex: 0, explanation: "発信元の確認が基本です。" },
+          { text: "情報の真偽確認に有効なのは？", choices: ["複数ソースの比較", "1つの情報だけ信じる", "直感", "占い"], correctIndex: 0, explanation: "複数の情報源を比較することで真偽を確認できます。" },
+          { text: "フェイクニュースが拡散される一因は？", choices: ["確証バイアス", "睡眠", "運動", "食事"], correctIndex: 0, explanation: "確証バイアスにより、都合の良い情報を信じやすくなります。" }
+        ]
+      },
+      { id: "password", title: "パスワード管理", summary: "安全なパスワードの作り方", level: "basic",
+        explanation: "安全なパスワードは、長く・複雑で・使い回さないことが基本です。パスワード管理アプリを使うと安全に管理できます。",
+        example: "12文字以上で大文字・小文字・数字・記号を組み合わせる。",
+        questions: [
+          { text: "安全なパスワードの条件は？", choices: ["長く複雑で使い回さない", "短く簡単", "誕生日", "全て同じ"], correctIndex: 0, explanation: "長く複雑で使い回さないことが基本です。" },
+          { text: "パスワードの使い回しの問題は？", choices: ["1つ漏れると全部危険", "何も問題ない", "安全になる", "早くなる"], correctIndex: 0, explanation: "使い回すと1つ漏れただけで全て危険になります。" },
+          { text: "パスワード管理に有効なのは？", choices: ["パスワード管理アプリ", "付箋に書く", "全員に教える", "覚えない"], correctIndex: 0, explanation: "パスワード管理アプリで安全に管理できます。" }
+        ]
+      },
+      { id: "sns", title: "SNSの使い方", summary: "情報発信とプライバシー", level: "apply",
+        explanation: "SNSは便利ですが、個人情報の公開・誹謗中傷・依存などのリスクがあります。公開範囲を設定し、発信内容に責任を持ちます。",
+        example: "位置情報や学校名を公開しない。",
+        questions: [
+          { text: "SNSで注意すべきことは？", choices: ["個人情報の公開", "毎日投稿", "友達を増やす", "写真を撮る"], correctIndex: 0, explanation: "個人情報の公開に注意が必要です。" },
+          { text: "SNSのリスクに含まれないのは？", choices: ["株価の上昇", "誹謗中傷", "依存", "個人情報の流出"], correctIndex: 0, explanation: "誹謗中傷・依存・個人情報の流出などがリスクです。" },
+          { text: "SNSで大事なのは？", choices: ["発信内容に責任を持つ", "何でも投稿する", "個人情報を公開する", "他人を攻撃する"], correctIndex: 0, explanation: "発信内容に責任を持つことが大切です。" }
+        ]
+      }
+    ]
+  }
+];
+
+// ============================================================
+// アプリケーションロジック
+// ============================================================
+
+// テーマ管理
+const THEME_KEY = "minigaku-theme";
+function getPreferredTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === "dark" || saved === "light") return saved;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const btn = document.getElementById("theme-btn");
+  if (btn) btn.textContent = theme === "dark" ? "☀️" : "🌙";
+  localStorage.setItem(THEME_KEY, theme);
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute("data-theme") || "light";
+  applyTheme(cur === "dark" ? "light" : "dark");
+}
+
+// 進捗管理
+const PROGRESS_KEY = "minigaku-progress";
+const STREAK_KEY = "minigaku-streak";
+
+function getProgress() {
+  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}"); }
+  catch { return {}; }
+}
+function saveResult(topicKey, score, total) {
+  const p = getProgress();
+  p[topicKey] = { completed: true, score, total, lastAttempt: new Date().toISOString() };
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+  updateStreak();
+  renderStreak();
+}
+function updateStreak() {
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  let streak = { lastDate: "", count: 0 };
+  try {
+    const raw = localStorage.getItem(STREAK_KEY);
+    if (raw) streak = JSON.parse(raw);
+  } catch {}
+  if (streak.lastDate === today) return;
+  streak.count = streak.lastDate === yesterday ? streak.count + 1 : 1;
+  streak.lastDate = today;
+  localStorage.setItem(STREAK_KEY, JSON.stringify(streak));
+}
+function getStreak() {
+  try {
+    const raw = localStorage.getItem(STREAK_KEY);
+    return raw ? JSON.parse(raw).count : 0;
+  } catch { return 0; }
+}
+function renderStreak() {
+  const el = document.getElementById("streak-display");
+  if (!el) return;
+  const s = getStreak();
+  el.innerHTML = s > 0 ? `🔥 連続 <strong>${s}</strong> 日` : "";
+}
+
+const app = document.getElementById("app");
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// グループ別に分野をまとめる
+function groupFields() {
+  const groups = {};
+  for (const f of FIELDS_DATA) {
+    const g = f.group || "その他";
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(f);
+  }
+  // グループ順
+  const order = ["自然科学", "人文・社会", "芸術・文化", "思考・リテラシー", "生活・健康", "言語・実用", "その他"];
+  return order.filter(g => groups[g]).map(g => ({ name: g, fields: groups[g] }));
+}
+
+function renderHome(filterText = "") {
+  const q = filterText.trim().toLowerCase();
+  const groups = groupFields();
+  let html = `
+    <h1 class="page-title">興味ある分野だけ、5分で1トピック。</h1>
+    <p class="page-desc">気になる分野を選んで、短い解説と例・クイズでサクッと学べます。全${FIELDS_DATA.length}分野。</p>
+    <input class="search-box" id="search-box" placeholder="分野を検索（例：お金、心理、数学）" value="${escapeHtml(filterText)}" />
+  `;
+  for (const g of groups) {
+    const matched = g.fields.filter(f =>
+      !q || f.name.toLowerCase().includes(q) || f.description.toLowerCase().includes(q) || f.id.includes(q)
+    );
+    if (matched.length === 0) continue;
+    html += `<div class="section-title">${escapeHtml(g.name)}</div>`;
+    html += `<div class="fields-grid">`;
+    for (const f of matched) {
+      html += `
+        <a class="field-card" href="#/${f.id}">
+          <div class="emoji">${f.emoji}</div>
+          <h2>${escapeHtml(f.name)}</h2>
+          <p>${escapeHtml(f.description)}</p>
+        </a>
+      `;
+    }
+    html += `</div>`;
+  }
+  if (!html.includes("field-card")) {
+    html += `<p style="color:var(--text-muted);text-align:center;padding:32px 0;">該当する分野が見つかりませんでした。</p>`;
+  }
+  app.innerHTML = html;
+
+  const box = document.getElementById("search-box");
+  box.addEventListener("input", (e) => {
+    const val = e.target.value;
+    const pos = e.target.selectionStart;
+    renderHome(val);
+    const newBox = document.getElementById("search-box");
+    newBox.focus();
+    newBox.setSelectionRange(pos, pos);
+  });
+}
+
+function renderField(fieldId) {
+  const f = FIELDS_DATA.find(x => x.id === fieldId);
+  if (!f) return renderHome();
+  const progress = getProgress();
+
+  // レベル別に分類
+  const basics = f.topics.filter(t => t.level === "basic");
+  const applies = f.topics.filter(t => t.level === "apply");
+
+  function renderList(list, startNum) {
+    return list.map((t, i) => {
+      const rec = progress[`${f.id}/${t.id}`];
+      const num = startNum + i;
+      return `
+        <li>
+          <a class="topic-item" href="#/${f.id}/${t.id}">
+            <span class="num">${num}</span>
+            <div class="info">
+              <div class="title">${escapeHtml(t.title)}
+                <span class="level level-${t.level}">${t.level === "basic" ? "基礎" : "応用"}</span>
+              </div>
+              <div class="summary">${escapeHtml(t.summary)}</div>
+            </div>
+            ${rec ? `<span class="score">✓ ${rec.score}/${rec.total}</span>` : ""}
+          </a>
+        </li>
+      `;
+    }).join("");
+  }
+
+  let html = `
+    <a class="back-link" href="#/">← 分野一覧</a>
+    <h1 class="page-title">${f.emoji} ${escapeHtml(f.name)}</h1>
+    <p class="page-desc">${escapeHtml(f.description)}</p>
+  `;
+  if (basics.length > 0) {
+    html += `<div class="section-title">基礎</div><ul class="topic-list">${renderList(basics, 1)}</ul>`;
+  }
+  if (applies.length > 0) {
+    html += `<div class="section-title">応用</div><ul class="topic-list">${renderList(applies, basics.length + 1)}</ul>`;
+  }
+  app.innerHTML = html;
+}
+
+function renderTopic(fieldId, topicId) {
+  const f = FIELDS_DATA.find(x => x.id === fieldId);
+  if (!f) return renderHome();
+  const t = f.topics.find(x => x.id === topicId);
+  if (!t) return renderField(fieldId);
+
+  let stage = "intro";
+  let index = 0;
+  let selected = null;
+  let answers = [];
+
+  function draw() {
+    const backLink = `<a class="back-link" href="#/${f.id}">← ${escapeHtml(f.name)}</a>`;
+    const title = `<h1 class="page-title">${escapeHtml(t.title)}</h1>`;
+
+    if (stage === "intro") {
+      app.innerHTML = `
+        ${backLink}${title}
+        <div class="card">
+          <h2>解説</h2>
+          <div class="explanation">${escapeHtml(t.explanation)}</div>
+          ${t.example ? `
+            <div class="example-box">
+              <div class="label">具体例</div>
+              ${escapeHtml(t.example)}
+            </div>
+          ` : ""}
+          <button class="btn-primary" id="start-btn">クイズを始める（${t.questions.length}問）</button>
+        </div>
+      `;
+      document.getElementById("start-btn").onclick = () => { stage = "quiz"; draw(); };
+    }
+
+    else if (stage === "quiz") {
+      const q = t.questions[index];
+      const dots = t.questions.map((_, i) => {
+        let cls = "dot";
+        if (answers[i] === true) cls += " ok";
+        else if (answers[i] === false) cls += " ng";
+        return `<span class="${cls}"></span>`;
+      }).join("");
+
+      const choices = q.choices.map((c, i) => {
+        let cls = "choice";
+        if (selected !== null) {
+          if (i === q.correctIndex) cls += " correct";
+          else if (i === selected) cls += " wrong";
+          else cls += " dim";
+        }
+        return `<button class="${cls}" data-idx="${i}" ${selected !== null ? "disabled" : ""}>${escapeHtml(c)}</button>`;
+      }).join("");
+
+      const verdict = selected !== null ? `
+        <div class="verdict">
+          <div class="label ${selected === q.correctIndex ? "ok" : "ng"}">
+            ${selected === q.correctIndex ? "正解！" : "不正解"}
+          </div>
+          <div class="exp">${escapeHtml(q.explanation)}</div>
+        </div>
+      ` : "";
+
+      const isLast = index === t.questions.length - 1;
+
+      app.innerHTML = `
+        ${backLink}
+        <div class="card">
+          <div class="quiz-header">
+            <span>問題 ${index + 1} / ${t.questions.length}</span>
+            <div class="dots">${dots}</div>
+          </div>
+          <div class="question-text">${escapeHtml(q.text)}</div>
+          <div class="choices">${choices}</div>
+          ${verdict}
+          <button class="btn-primary" id="next-btn" ${selected === null ? "disabled" : ""}>
+            ${isLast ? "結果を見る" : "次の問題"}
+          </button>
+        </div>
+      `;
+
+      document.querySelectorAll(".choice").forEach(btn => {
+        btn.onclick = () => {
+          if (selected !== null) return;
+          const i = parseInt(btn.dataset.idx);
+          selected = i;
+          answers[index] = i === q.correctIndex;
+          draw();
+        };
+      });
+
+      document.getElementById("next-btn").onclick = () => {
+        if (selected === null) return;
+        if (isLast) {
+          const score = answers.filter(a => a === true).length;
+          saveResult(`${f.id}/${t.id}`, score, t.questions.length);
+          stage = "result";
+          draw();
+        } else {
+          index++;
+          selected = null;
+          draw();
+        }
+      };
+    }
+
+    else if (stage === "result") {
+      const score = answers.filter(a => a === true).length;
+      const total = t.questions.length;
+      const msg = score === total
+        ? "全問正解！お見事です。"
+        : "間違えた問題は、解説を読み返してみましょう。";
+      app.innerHTML = `
+        ${backLink}${title}
+        <div class="card result-card">
+          <div class="label">結果</div>
+          <div class="score-big">${score} / ${total}</div>
+          <div class="msg">${msg}</div>
+          <div class="btn-row">
+            <button class="btn-secondary" id="retry-btn">もう一度</button>
+            <a class="btn-primary" href="#/${f.id}" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">他のトピック</a>
+          </div>
+        </div>
+      `;
+      document.getElementById("retry-btn").onclick = () => {
+        stage = "intro"; index = 0; selected = null; answers = [];
+        draw();
+      };
+    }
+  }
+
+  draw();
+}
+
+// ルーター
+let currentSearch = "";
+function router() {
+  const hash = location.hash.slice(1) || "/";
+  const parts = hash.split("/").filter(Boolean);
+  if (parts.length === 0) renderHome(currentSearch);
+  else if (parts.length === 1) renderField(parts[0]);
+  else renderTopic(parts[0], parts[1]);
+  window.scrollTo(0, 0);
+}
+
+// 初期化
+window.addEventListener("hashchange", router);
+window.addEventListener("DOMContentLoaded", () => {
+  applyTheme(getPreferredTheme());
+  document.getElementById("theme-btn").onclick = toggleTheme;
+  renderStreak();
+  router();
+});
+
+// OSテーマ変更を監視（手動設定がない場合）
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+  if (!localStorage.getItem(THEME_KEY)) {
+    applyTheme(e.matches ? "dark" : "light");
+  }
+});
+</script>
+</body>
+</html>
