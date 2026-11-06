@@ -1,44 +1,43 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiniGaku | 学年別 学習アプリ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiniGaku | 学年別 学習アプリ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-main">
-        <div style="padding: 0 24px 32px; font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.02em;">MiniGaku</div>
-        <nav class="nav" id="nav"></nav>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-main">
+      <div style="padding: 0 24px 32px; font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.02em;">MiniGaku</div>
+      <nav class="nav" id="nav"></nav>
+    </div>
+    <div class="sidebar-footer" id="sidebar-footer"></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="mobile-menu" id="menu-btn">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <div class="topbar-title" id="page-title">ホーム</div>
       </div>
-      <div class="sidebar-footer" id="sidebar-footer"></div>
-    </aside>
-    <main class="main">
-      <header class="topbar">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <button class="mobile-menu" id="menu-btn">
-            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-          </button>
-          <div class="topbar-title" id="page-title">ホーム</div>
-        </div>
-        <div class="topbar-actions">
-          <div class="auth-buttons" id="auth-buttons"></div>
-          <button class="theme-toggle" id="theme-btn">
-            <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          </button>
-        </div>
-      </header>
-      <div class="content" id="app"></div>
-    </main>
-  </div>
+      <div class="topbar-actions">
+        <div class="auth-buttons" id="auth-buttons"></div>
+        <button class="theme-toggle" id="theme-btn">
+          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="content" id="app"></div>
+  </main>
+</div>
 
-  <!-- データとロジックを分離 -->
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
