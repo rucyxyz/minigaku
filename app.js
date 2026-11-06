@@ -1,13 +1,21 @@
 const app = document.getElementById("app");
 const pageTitle = document.getElementById("page-title");
 
-const KEYS = { THEME:"sf.theme", PROGRESS:"sf.progress", SESSIONS:"sf.sessions", USER:"sf.user", USERS:"sf.users", TODOS:"sf.todos", LAST_QUIZ:"sf.last_quiz" };
+/* =========================================================================
+   データ・ストレージ
+   ========================================================================= */
+const KEYS = { 
+  THEME:"sf.theme", PROGRESS:"sf.progress", SESSIONS:"sf.sessions", 
+  USER:"sf.user", USERS:"sf.users", TODOS:"sf.todos", LAST_QUIZ:"sf.last_quiz" 
+};
+
 function load(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
 function fmtMin(m) { if (m<60) return m+"分"; const h=Math.floor(m/60), r=m%60; return r?`${h}時間${r}分`:`${h}時間`; }
 function esc(s) { return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+// テーマ
 function initTheme() {
   const saved = load(KEYS.THEME, null);
   const t = saved || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
@@ -21,6 +29,7 @@ document.getElementById("theme-btn").onclick = () => {
   save(KEYS.THEME, next);
 };
 
+// アカウント
 function getCurrentUser() { return load(KEYS.USER, null); }
 function setCurrentUser(u) { save(KEYS.USER, u); }
 function getUsers() { return load(KEYS.USERS, {}); }
@@ -50,6 +59,7 @@ function updateProfile(name, bio) {
   setCurrentUser({ ...cur, name });
 }
 
+// 学習記録
 function getProgress() { return load(KEYS.PROGRESS, {}); }
 function setProgress(id, correct, total) {
   const p = getProgress();
@@ -76,6 +86,7 @@ function streak() {
   return count;
 }
 
+// 挨拶の時間帯判定
 function getGreetingText() {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 11) return "おはようございます。";
@@ -85,9 +96,13 @@ function getGreetingText() {
 function getFullGreeting() {
   const user = getCurrentUser();
   const timeGreeting = getGreetingText();
-  if (user && user.name) return `${user.name}さん、${timeGreeting}`;
+  if (user && user.name) {
+    return `${user.name}さん、${timeGreeting}`;
+  }
   return timeGreeting;
 }
+
+// 称号（ランク）
 function getRankBadge() {
   const s = streak();
   if (s >= 30) return "🔥 30日連続 マスター";
@@ -97,6 +112,9 @@ function getRankBadge() {
   return "";
 }
 
+/* =========================================================================
+   ナビゲーション
+   ========================================================================= */
 function renderNav(activeId) {
   const NAV = [
     { id:"home", label:"ホーム", icon:'<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>' },
@@ -135,29 +153,51 @@ document.getElementById("menu-btn").onclick = () => document.getElementById("sid
 window.navigateTo = (pageId) => {
   document.getElementById("sidebar").classList.remove("open");
   window.scrollTo(0,0);
-  if (pageId === "home") { renderNav("home"); pageTitle.textContent = "ホーム"; window.renderHomePage(); }
-  else if (pageId === "learn") { renderNav("learn"); pageTitle.textContent = "学習"; window.renderLearnIndex(); }
-  else if (pageId === "record") { renderNav("record"); pageTitle.textContent = "記録"; window.renderRecordPage(); }
-  else if (pageId === "profile") { renderNav(""); pageTitle.textContent = "プロフィール"; window.renderProfilePage(); }
+  if (pageId === "home") {
+    renderNav("home");
+    pageTitle.textContent = "ホーム";
+    window.renderHomePage();
+  } else if (pageId === "learn") {
+    renderNav("learn");
+    pageTitle.textContent = "学習";
+    window.renderLearnIndex();
+  } else if (pageId === "record") {
+    renderNav("record");
+    pageTitle.textContent = "記録";
+    window.renderRecordPage();
+  } else if (pageId === "profile") {
+    renderNav("");
+    pageTitle.textContent = "プロフィール";
+    window.renderProfilePage();
+  }
 };
 
+/* =========================================================================
+   画面描画：ホーム
+   ========================================================================= */
 window.renderHomePage = () => {
   const tMin = todayMinutes();
   const s = streak();
   const p = getProgress();
+  
+  // 全体の単元数と達成数を計算
   let totalUnits = 0;
   for (const stage of Object.values(CURRICULUM)) {
     for (const subject of Object.values(stage)) {
-      for (const gradeUnits of Object.values(subject)) totalUnits += gradeUnits.length;
+      for (const gradeUnits of Object.values(subject)) {
+        totalUnits += gradeUnits.length;
+      }
     }
   }
-  const doneUnits = Object.values(p).filter(r=>r.ratio>=0.8).length;
+  const doneUnits = Object.values(p).filter(r => r.ratio >= 0.8).length;
   const percent = totalUnits ? Math.round((doneUnits / totalUnits) * 100) : 0;
   
+  // 円形プログレスバーの計算
   const radius = 24;
   const circumference = 2 * Math.PI * radius;
   const strokeDasharray = `${(percent / 100) * circumference} ${circumference}`;
 
+  // 前回の続き
   const lastQuiz = load(KEYS.LAST_QUIZ, null);
   const resumeBtnHtml = lastQuiz ? `
     <button class="btn-resume" onclick="window.renderQuizPage('${esc(lastQuiz.title)}', '${lastQuiz.stage}', '${lastQuiz.subject}', '${lastQuiz.grade}', ${lastQuiz.index})">
@@ -166,10 +206,12 @@ window.renderHomePage = () => {
     </button>
   ` : "";
 
+  // 挨拶と称号
   const greetingText = getFullGreeting();
   const badge = getRankBadge();
   const badgeHtml = badge ? `<div class="badge">${badge}</div>` : "";
 
+  // Todoリスト
   const todos = load(KEYS.TODOS, []);
   const todoHtml = todos.map((t, i) => `
     <div class="checklist-item">
@@ -189,12 +231,28 @@ window.renderHomePage = () => {
     <p class="page-desc">今日も少しずつ、学習を進めましょう。</p>
     
     <div class="stat-grid">
-      <div class="stat-card"><div class="stat-info"><div class="label">今日の学習</div><div class="value">${fmtMin(tMin)}</div></div></div>
-      <div class="stat-card"><div class="stat-info"><div class="label">連続学習</div><div class="value">${s}<small style="font-size:16px; font-weight:400; margin-left:4px;">日</small></div></div></div>
       <div class="stat-card">
-        <div class="stat-info"><div class="label">達成単元</div><div class="value">${doneUnits}<small style="font-size:16px; font-weight:400; margin-left:4px;"> / ${totalUnits}</small></div></div>
+        <div class="stat-info">
+          <div class="label">今日の学習</div>
+          <div class="value">${fmtMin(tMin)}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="label">連続学習</div>
+          <div class="value">${s}<small style="font-size:16px; font-weight:400; margin-left:4px;">日</small></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="label">達成単元</div>
+          <div class="value">${doneUnits}<small style="font-size:16px; font-weight:400; margin-left:4px;"> / ${totalUnits}</small></div>
+        </div>
         <div class="progress-circle-wrap">
-          <svg><circle class="bg" cx="30" cy="30" r="${radius}"></circle><circle class="bar" cx="30" cy="30" r="${radius}" stroke-dasharray="${strokeDasharray}"></circle></svg>
+          <svg>
+            <circle class="bg" cx="30" cy="30" r="${radius}"></circle>
+            <circle class="bar" cx="30" cy="30" r="${radius}" stroke-dasharray="${strokeDasharray}"></circle>
+          </svg>
           <div class="progress-circle-text">${percent}%</div>
         </div>
       </div>
@@ -206,23 +264,48 @@ window.renderHomePage = () => {
     </div>
 
     <div class="checklist">
-      <div class="checklist-header"><div class="checklist-title">今日やること</div></div>
+      <div class="checklist-header">
+        <div class="checklist-title">今日やること</div>
+      </div>
       <div class="checklist-input-wrap">
         <input type="text" class="checklist-input" id="todo-input" placeholder="例：宿題のプリントをやる">
         <button class="checklist-add-btn" onclick="window.addTodo()">＋</button>
       </div>
-      <div id="todo-list">${todoHtml || '<p class="muted" style="font-size:14px; text-align:center; padding:16px 0;">今日の目標を追加しましょう</p>'}</div>
+      <div id="todo-list">
+        ${todoHtml || '<p class="muted" style="font-size:14px; text-align:center; padding:16px 0;">今日の目標を追加しましょう</p>'}
+      </div>
     </div>
   `;
 };
 
 window.addTodo = () => {
-  const input = document.getElementById("todo-input"); const text = input.value.trim(); if (!text) return;
-  const todos = load(KEYS.TODOS, []); todos.push({ text, done: false }); save(KEYS.TODOS, todos); input.value = ""; window.renderHomePage();
+  const input = document.getElementById("todo-input");
+  const text = input.value.trim();
+  if (!text) return;
+  const todos = load(KEYS.TODOS, []);
+  todos.push({ text, done: false });
+  save(KEYS.TODOS, todos);
+  input.value = "";
+  window.renderHomePage();
 };
-window.toggleTodo = (i) => { const todos = load(KEYS.TODOS, []); todos[i].done = !todos[i].done; save(KEYS.TODOS, todos); window.renderHomePage(); };
-window.deleteTodo = (i) => { const todos = load(KEYS.TODOS, []); todos.splice(i, 1); save(KEYS.TODOS, todos); window.renderHomePage(); };
 
+window.toggleTodo = (i) => {
+  const todos = load(KEYS.TODOS, []);
+  todos[i].done = !todos[i].done;
+  save(KEYS.TODOS, todos);
+  window.renderHomePage();
+};
+
+window.deleteTodo = (i) => {
+  const todos = load(KEYS.TODOS, []);
+  todos.splice(i, 1);
+  save(KEYS.TODOS, todos);
+  window.renderHomePage();
+};
+
+/* =========================================================================
+   画面描画：学習
+   ========================================================================= */
 window.renderLearnIndex = () => {
   let html = `<div class="eboard-header">教科の一覧</div><div class="eboard-columns">`;
   for (const [stage, subjects] of Object.entries(CURRICULUM)) {
@@ -230,6 +313,7 @@ window.renderLearnIndex = () => {
     for (const [subject, grades] of Object.entries(subjects)) {
       let unitCount = 0;
       for (const gradeUnits of Object.values(grades)) unitCount += gradeUnits.length;
+
       let color = "#228be6";
       if (subject === "理科") color = "#40c057";
       if (subject === "社会") color = "#fab005";
@@ -257,8 +341,11 @@ window.renderSubjectPage = (stage, subject) => {
   const subjectData = CURRICULUM[stage][subject];
   const grades = Object.keys(subjectData);
   const activeGrade = grades[0];
+
+  // 科目全体の進捗率を計算
   const p = getProgress();
-  let totalUnits = 0, doneUnits = 0;
+  let totalUnits = 0;
+  let doneUnits = 0;
   for (const g of grades) {
     for (const u of subjectData[g]) {
       totalUnits++;
@@ -268,7 +355,9 @@ window.renderSubjectPage = (stage, subject) => {
   const percent = totalUnits ? Math.round((doneUnits / totalUnits) * 100) : 0;
 
   let html = `
-    <div class="unit-header"><span onclick="window.navigateTo('learn')">教科一覧</span> &nbsp;/&nbsp; ${esc(subject)}</div>
+    <div class="unit-header">
+      <span onclick="window.navigateTo('learn')">教科一覧</span> &nbsp;/&nbsp; ${esc(subject)}
+    </div>
     <div class="unit-layout">
       <div class="unit-sidebar">
         <div class="unit-sidebar-title">${esc(subject)}</div>
@@ -305,13 +394,21 @@ window.drawUnits = (stage, subject, grade) => {
   `).join("");
 };
 
+/* =========================================================================
+   画面描画：クイズ
+   ========================================================================= */
 window.renderQuizPage = (unitTitle, stage, subject, grade, unitIndex) => {
   pageTitle.textContent = unitTitle;
   const unitData = CURRICULUM[stage][subject][grade][unitIndex];
   const questions = unitData.questions;
+  
+  // 前回の続きを保存
   save(KEYS.LAST_QUIZ, { title: unitTitle, stage, subject, grade, index: unitIndex });
 
-  let currentQ = 0, selected = null, answers = [], startTime = Date.now();
+  let currentQ = 0;
+  let selected = null;
+  let answers = [];
+  let startTime = Date.now();
 
   function draw() {
     if (currentQ >= questions.length) {
@@ -319,7 +416,7 @@ window.renderQuizPage = (unitTitle, stage, subject, grade, unitIndex) => {
       const total = questions.length;
       const rate = Math.round((correct / total) * 100);
       setProgress(unitTitle, correct, total);
-      addSession(unitTitle, subject, Math.max(1, Math.round((Date.now() - startTime) / 60000)));
+      addSession(unitTitle, subject, Math.max(1, Math.round((Date.now()-startTime)/60000)));
 
       app.innerHTML = `
         <div style="max-width: 640px; margin: 0 auto;">
@@ -330,6 +427,7 @@ window.renderQuizPage = (unitTitle, stage, subject, grade, unitIndex) => {
               <button class="btn btn-primary" onclick="window.navigateTo('learn')">次の単元へ</button>
               <button class="btn" onclick="window.renderQuizPage('${esc(unitTitle)}', '${stage}', '${subject}', '${grade}', ${unitIndex})">もう一度</button>
               <button class="btn" onclick="window.navigateTo('learn')">メニューへ</button>
+              <button class="btn" style="color:var(--red); border-color:var(--red);" onclick="alert('間違えた問題の復習画面（デモ）')">間違えた問題を確認</button>
             </div>
           </div>
         </div>
@@ -344,18 +442,24 @@ window.renderQuizPage = (unitTitle, stage, subject, grade, unitIndex) => {
 
     app.innerHTML = `
       <div class="quiz-wrapper">
-        <div class="unit-header"><span onclick="window.navigateTo('learn')">教科一覧</span> &nbsp;/&nbsp; ${esc(unitTitle)}</div>
+        <div class="unit-header">
+          <span onclick="window.navigateTo('learn')">教科一覧</span> &nbsp;/&nbsp; ${esc(unitTitle)}
+        </div>
         <div class="quiz-container">
           <div class="quiz-header">
             <button class="quiz-close" onclick="window.navigateTo('learn')">×</button>
             <div class="quiz-title">${esc(unitTitle)}</div>
             <div style="width:24px;"></div>
           </div>
+          
           <div class="quiz-progress-bar">
-            <div class="quiz-track"><div class="quiz-fill" style="width: ${progressPercent}%"></div></div>
+            <div class="quiz-track">
+              <div class="quiz-fill" style="width: ${progressPercent}%"></div>
+            </div>
             <div class="quiz-stat">${currentQ + 1}/${questions.length}</div>
             <div class="quiz-stat">正答率:${accuracy}%</div>
           </div>
+
           <div class="quiz-question-area">
             <div class="quiz-q-text">${esc(q.q)}</div>
             <button class="memo-btn" onclick="window._openMemo()">
@@ -363,6 +467,7 @@ window.renderQuizPage = (unitTitle, stage, subject, grade, unitIndex) => {
               <span>Memo</span>
             </button>
           </div>
+
           <div class="quiz-options">
             ${q.opts.map((opt, i) => {
               let cls = "quiz-opt";
@@ -382,7 +487,11 @@ window.renderQuizPage = (unitTitle, stage, subject, grade, unitIndex) => {
       selected = i;
       answers[currentQ] = (i === q.a);
       draw();
-      setTimeout(() => { currentQ++; selected = null; draw(); }, 800);
+      setTimeout(() => {
+        currentQ++;
+        selected = null;
+        draw();
+      }, 800);
     };
 
     window._openMemo = () => {
@@ -401,19 +510,25 @@ window.renderQuizPage = (unitTitle, stage, subject, grade, unitIndex) => {
               <button class="memo-btn-close" onclick="window._closeMemo()">閉じる</button>
             </div>
           </div>
-          <div class="memo-canvas-wrap"><canvas class="memo-canvas" id="memo-canvas"></canvas></div>
+          <div class="memo-canvas-wrap">
+            <canvas class="memo-canvas" id="memo-canvas"></canvas>
+          </div>
           <div class="memo-tools">
             <button class="memo-tool active" id="tool-pen" onclick="window._setTool('pen')">
-              <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>ペン
+              <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              ペン
             </button>
             <button class="memo-tool" id="tool-eraser" onclick="window._setTool('eraser')">
-              <svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-2 2z"></path><path d="M6 11l9 9"></path></svg>消しゴム
+              <svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-2 2z"></path><path d="M6 11l9 9"></path></svg>
+              消しゴム
             </button>
             <button class="memo-tool" onclick="window._memoUndo()">
-              <svg viewBox="0 0 24 24"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>戻る
+              <svg viewBox="0 0 24 24"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+              戻る
             </button>
             <button class="memo-tool" onclick="window._memoRedo()">
-              <svg viewBox="0 0 24 24"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>進む
+              <svg viewBox="0 0 24 24"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
+              進む
             </button>
           </div>
         </div>
@@ -422,25 +537,37 @@ window.renderQuizPage = (unitTitle, stage, subject, grade, unitIndex) => {
       window._initCanvas();
     };
 
-    window._closeMemo = () => { const modal = document.getElementById("memo-modal"); if (modal) modal.remove(); };
+    window._closeMemo = () => {
+      const modal = document.getElementById("memo-modal");
+      if (modal) modal.remove();
+    };
   }
   draw();
 };
 
+/* =========================================================================
+   メモ機能
+   ========================================================================= */
 let canvas, ctx, isDrawing = false, currentTool = 'pen';
-let strokes = [], currentStroke = [], redoStack = [];
+let strokes = [], currentStroke = [];
+let redoStack = [];
 
 window._initCanvas = () => {
   canvas = document.getElementById("memo-canvas");
   ctx = canvas.getContext("2d");
+  
   const rect = canvas.parentElement.getBoundingClientRect();
   canvas.width = rect.width;
   canvas.height = rect.height;
-  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  
   canvas.addEventListener("mousedown", startDrawing);
   canvas.addEventListener("mousemove", draw);
   canvas.addEventListener("mouseup", stopDrawing);
   canvas.addEventListener("mouseout", stopDrawing);
+  
   canvas.addEventListener("touchstart", (e) => { e.preventDefault(); startDrawing(e.touches[0]); }, { passive: false });
   canvas.addEventListener("touchmove", (e) => { e.preventDefault(); draw(e.touches[0]); }, { passive: false });
   canvas.addEventListener("touchend", stopDrawing);
@@ -455,11 +582,14 @@ function startDrawing(e) {
   isDrawing = true;
   const pos = getPos(e);
   currentStroke = [{ x: pos.x, y: pos.y, tool: currentTool }];
-  ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
   if (currentTool === 'eraser') {
-    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(); ctx.lineWidth = 24;
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    ctx.lineWidth = 24;
   } else {
-    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim(); ctx.lineWidth = 3;
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+    ctx.lineWidth = 3;
   }
   redoStack = [];
 }
@@ -468,12 +598,16 @@ function draw(e) {
   if (!isDrawing) return;
   const pos = getPos(e);
   currentStroke.push({ x: pos.x, y: pos.y, tool: currentTool });
-  ctx.lineTo(pos.x, pos.y); ctx.stroke();
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
 }
 
 function stopDrawing() {
   if (!isDrawing) return;
-  isDrawing = false; ctx.closePath(); strokes.push(currentStroke); currentStroke = [];
+  isDrawing = false;
+  ctx.closePath();
+  strokes.push(currentStroke);
+  currentStroke = [];
 }
 
 window._setTool = (tool) => {
@@ -482,24 +616,46 @@ window._setTool = (tool) => {
   document.getElementById("tool-eraser").classList.toggle("active", tool === 'eraser');
 };
 
-window._clearMemo = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); strokes = []; redoStack = []; };
-window._memoUndo = () => { if (strokes.length === 0) return; const last = strokes.pop(); redoStack.push(last); redrawCanvas(); };
-window._memoRedo = () => { if (redoStack.length === 0) return; const s = redoStack.pop(); strokes.push(s); redrawCanvas(); };
+window._clearMemo = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  strokes = [];
+  redoStack = [];
+};
+
+window._memoUndo = () => {
+  if (strokes.length === 0) return;
+  const lastStroke = strokes.pop();
+  redoStack.push(lastStroke);
+  redrawCanvas();
+};
+
+window._memoRedo = () => {
+  if (redoStack.length === 0) return;
+  const stroke = redoStack.pop();
+  strokes.push(stroke);
+  redrawCanvas();
+};
 
 function redrawCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   strokes.forEach(stroke => {
-    ctx.beginPath(); ctx.moveTo(stroke[0].x, stroke[0].y);
+    ctx.beginPath();
+    ctx.moveTo(stroke[0].x, stroke[0].y);
     if (stroke[0].tool === 'eraser') {
-      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(); ctx.lineWidth = 24;
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      ctx.lineWidth = 24;
     } else {
-      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim(); ctx.lineWidth = 3;
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+      ctx.lineWidth = 3;
     }
     stroke.forEach(p => ctx.lineTo(p.x, p.y));
     ctx.stroke();
   });
 }
 
+/* =========================================================================
+   画面描画：記録
+   ========================================================================= */
 window.renderRecordPage = () => {
   const sessions = getSessions();
   const tMin = todayMinutes();
@@ -515,8 +671,6 @@ window.renderRecordPage = () => {
     const dow = dayNames[new Date(d).getDay()];
     week.push({ date:d, min:m, dow });
   }
-  const maxMin = Math.max(1, ...week.map(w=>w.min));
-  const yMax = Math.max(60, Math.ceil(maxMin/60)*60);
 
   const recent = sessions.slice().sort((a,b)=>b.ts-a.ts).slice(0,10);
 
@@ -537,9 +691,11 @@ window.renderRecordPage = () => {
         ${[4,3,2,1,0].map(v=>`<span>${v===0?'0分':v+'時間'}</span>`).join("")}
       </div>
       <div class="chart-area">
-        <div class="chart-grid">${[0,1,2,3,4].map(()=>`<div class="chart-line"></div>`).join("")}</div>
+        <div class="chart-grid">
+          ${[0,1,2,3,4].map(()=>`<div class="chart-line"></div>`).join("")}
+        </div>
         <div class="chart-bars">
-          ${week.map(w => `<div class="chart-bar" title="${fmtMin(w.min)}"><div class="chart-fill" style="height:${(w.min / (yMax)) * 100}%"></div></div>`).join("")}
+          ${week.map(w => `<div class="chart-bar" title="${fmtMin(w.min)}"><div class="chart-fill" style="height:${(w.min / (4*60)) * 100}%"></div></div>`).join("")}
         </div>
       </div>
     </div>
@@ -557,7 +713,9 @@ window.renderRecordPage = () => {
             <div class="history-date">${r.date.slice(5).replace("-","/")}</div>
             <div class="history-subject">${esc(r.subject || "その他")}</div>
             <div class="history-unit">${esc(r.label)}</div>
-            <div class="history-bar-wrap"><div class="history-bar-fill" style="width:${rate}%"></div></div>
+            <div class="history-bar-wrap">
+              <div class="history-bar-fill" style="width:${rate}%"></div>
+            </div>
             <div class="history-rate">${rate}%</div>
           </div>
         `;
@@ -587,17 +745,42 @@ window.renderRecordPage = () => {
   if (timerRunning) { toggleBtn.textContent = "一時停止"; } else { toggleBtn.textContent = timerSeconds > 0 ? "再開" : "開始"; }
 
   toggleBtn.onclick = () => {
-    if (timerRunning) { timerRunning = false; clearInterval(timerInterval); toggleBtn.textContent = "再開"; }
-    else { timerRunning = true; timerInterval = setInterval(() => { timerSeconds++; updateDisplay(); }, 1000); toggleBtn.textContent = "一時停止"; }
+    if (timerRunning) {
+      timerRunning = false;
+      clearInterval(timerInterval);
+      toggleBtn.textContent = "再開";
+    } else {
+      timerRunning = true;
+      timerInterval = setInterval(() => { timerSeconds++; updateDisplay(); }, 1000);
+      toggleBtn.textContent = "一時停止";
+    }
   };
-  document.getElementById("timer-reset").onclick = () => { timerRunning = false; clearInterval(timerInterval); timerSeconds = 0; updateDisplay(); toggleBtn.textContent = "開始"; };
+  document.getElementById("timer-reset").onclick = () => {
+    timerRunning = false;
+    clearInterval(timerInterval);
+    timerSeconds = 0;
+    updateDisplay();
+    toggleBtn.textContent = "開始";
+  };
   document.getElementById("timer-save").onclick = () => {
     const min = Math.round(timerSeconds/60);
-    if (min > 0) { addSession("タイマー学習", "タイマー", min); timerSeconds = 0; updateDisplay(); toggleBtn.textContent = "開始"; timerRunning = false; clearInterval(timerInterval); window.renderRecordPage(); }
-    else { alert("1分以上計測してください。"); }
+    if (min > 0) {
+      addSession("タイマー学習", "タイマー", min);
+      timerSeconds = 0;
+      updateDisplay();
+      toggleBtn.textContent = "開始";
+      timerRunning = false;
+      clearInterval(timerInterval);
+      window.renderRecordPage();
+    } else {
+      alert("1分以上計測してください。");
+    }
   };
 };
 
+/* =========================================================================
+   画面描画：プロフィール
+   ========================================================================= */
 window.renderProfilePage = () => {
   const user = getCurrentUser();
   if (!user) {
@@ -657,10 +840,16 @@ window.renderProfilePage = () => {
 
   window.doLogout = () => {
     if (!confirm("ログアウトしますか？")) return;
-    logout(); renderAuthButtons(); renderSidebarFooter(); window.navigateTo("home");
+    logout();
+    renderAuthButtons();
+    renderSidebarFooter();
+    window.navigateTo("home");
   };
 };
 
+/* =========================================================================
+   アカウントモーダル
+   ========================================================================= */
 window.openLogin = () => {
   showModal(`
     <h3 style="margin-bottom:24px; font-size:20px; font-weight:700;">ログイン</h3>
@@ -759,6 +948,9 @@ window.closeModal = () => {
   if (overlay) overlay.classList.remove("open");
 };
 
+/* =========================================================================
+   初期化
+   ========================================================================= */
 renderAuthButtons();
 renderSidebarFooter();
 window.navigateTo("home");
