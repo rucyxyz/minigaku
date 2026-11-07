@@ -461,19 +461,13 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
           
           <div class="quiz-feedback-area ${selected!==null?'show':''}" id="feedback-area">
             ${selected !== null ? `
-              <div style="display:flex; flex-direction:column; width:100%; gap:16px;">
-                <div class="feedback-text ${selected === q.a ? 'correct' : 'wrong'}" style="font-size:16px;">
-                  ${selected === q.a ? '正解！' : '不正解...'} 
-                </div>
-                ${selected === q.a ? '' : `
-                  <div style="background:var(--bg); padding:16px; border-radius:8px; font-size:14px; line-height:1.6; color:var(--text);">
-                    <div style="font-weight:700; color:var(--accent); margin-bottom:4px;">解説</div>
-                    ${esc(q.exp || 'この問題の詳しい解説はありません。')}
-                  </div>
-                `}
-                <div class="feedback-actions">
-                  <button class="btn btn-primary" style="padding:10px 32px; font-size:14px;" onclick="window._nextQ()">次へ</button>
-                </div>
+              <div class="feedback-text ${selected === q.a ? 'correct' : 'wrong'}" style="font-size:16px;">
+                ${selected === q.a ? '正解！' : '不正解...'} 
+                <div class="feedback-exp" id="feedback-exp-content">${esc(q.exp || 'この問題の詳しい解説はありません。')}</div>
+              </div>
+              <div class="feedback-actions">
+                <button class="btn" style="padding:10px 24px; font-size:14px;" onclick="document.getElementById('feedback-exp-content').classList.toggle('show')">解説</button>
+                <button class="btn btn-primary" style="padding:10px 32px; font-size:14px;" onclick="window._nextQ()">次へ</button>
               </div>
             ` : ''}
           </div>
@@ -515,6 +509,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       overlay.id = "memo-modal";
       overlay.innerHTML = `
         <div class="memo-modal" id="memo-window">
+          <div class="memo-grabber" id="memo-grabber"></div>
           <div class="memo-header" id="memo-drag-handle">
             <div class="memo-title">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
@@ -546,21 +541,49 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       window._initCanvas();
       
       const modal = document.getElementById("memo-window");
-      const handle = document.getElementById("memo-drag-handle");
+      const dragHandle = document.getElementById("memo-drag-handle");
+      const grabber = document.getElementById("memo-grabber");
       let isDragging = false, startX, startY, startLeft, startTop;
-      modal.style.left = '50%'; modal.style.top = '50%'; modal.style.transform = 'translate(-50%, -50%)';
+      
+      modal.style.left = (window.innerWidth - 700) / 2 + 'px'; 
+      modal.style.top = (window.innerHeight - 500) / 2 + 'px'; 
+      modal.style.transform = 'none';
 
-      handle.addEventListener("mousedown", (e) => {
+      dragHandle.addEventListener("mousedown", (e) => {
         isDragging = true;
-        const rect = modal.getBoundingClientRect();
         startX = e.clientX; startY = e.clientY;
-        startLeft = rect.left; startTop = rect.top;
-        modal.style.left = startLeft + 'px'; modal.style.top = startTop + 'px';
-        modal.style.transform = 'none';
+        startLeft = modal.offsetLeft; startTop = modal.offsetTop;
         document.body.style.userSelect = 'none';
       });
+      
+      grabber.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        startX = e.clientX; startY = e.clientY;
+        startLeft = modal.offsetLeft; startTop = modal.offsetTop;
+        const startHeight = modal.offsetHeight;
+        document.body.style.userSelect = 'none';
+
+        const onMouseMoveResize = (ev) => {
+          if (!isDragging) return;
+          const newHeight = startHeight + (ev.clientY - startY);
+          if (newHeight > 200) {
+            modal.style.height = newHeight + 'px';
+            resizeCanvas();
+          }
+        };
+        const onMouseUpResize = () => {
+          isDragging = false;
+          document.body.style.userSelect = '';
+          document.removeEventListener("mousemove", onMouseMoveResize);
+          document.removeEventListener("mouseup", onMouseUpResize);
+        };
+        document.addEventListener("mousemove", onMouseMoveResize);
+        document.addEventListener("mouseup", onMouseUpResize);
+      });
+
       document.addEventListener("mousemove", (e) => {
         if (!isDragging) return;
+        if (e.target === grabber || modal.style.height) return;
         modal.style.left = (startLeft + e.clientX - startX) + 'px';
         modal.style.top = (startTop + e.clientY - startY) + 'px';
       });
@@ -601,6 +624,15 @@ window._initCanvas = () => {
   canvas.addEventListener("touchmove", (e)=>{e.preventDefault();draw(e.touches[0]);},{passive:false});
   canvas.addEventListener("touchend", stopDrawing);
 };
+
+function resizeCanvas() {
+  const wrap = canvas.parentElement;
+  const rect = wrap.getBoundingClientRect();
+  const tempStrokes = [...strokes];
+  canvas.width = rect.width; canvas.height = rect.height;
+  strokes = tempStrokes;
+  redrawCanvas();
+}
 
 function getPos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
 
@@ -671,6 +703,18 @@ function saveCanvasToStorage() {
 }
 
 window.renderRecordPage = () => {
+  if (!getCurrentUser()) {
+    app.innerHTML = `
+      <h1>記録</h1>
+      <p class="page-desc">学習の記録を見るには、ログインまたは会員登録が必要です。</p>
+      <div style="display:flex; gap:16px;">
+        <button class="btn btn-primary" onclick="window.openLogin()">ログイン</button>
+        <button class="btn" onclick="window.openRegister()">会員登録</button>
+      </div>
+    `;
+    return;
+  }
+
   const sessions = getSessions();
   const tMin = todayMinutes();
   const mMin = monthMinutes();
