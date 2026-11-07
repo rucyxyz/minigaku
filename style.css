@@ -1,7 +1,7 @@
 :root {
   --bg: #f8f9fa; --surface: #ffffff; --text: #212529; --text-muted: #868e96;
   --border: #dee2e6; --accent: #228be6; --accent-bg: #e7f5ff;
-  --green: #40c057; --red: #fa5252;
+  --green: #40c057; --red: #fa5252; --yellow: #fab005; --orange: #fd7e14;
   --radius: 12px;
   --font: "Inter", "Noto Sans JP", sans-serif;
   --sidebar-w: 240px;
@@ -85,8 +85,11 @@ h2 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
 .ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--accent); }
 .achievement-text .value { font-size: 28px; }
 
-/* 前回の続きショートカット */
-.resume-card { margin-top: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+/* ホームのボタンと前回の続きを横並びにする */
+.home-actions { display: flex; gap: 16px; align-items: stretch; margin-top: 40px; flex-wrap: wrap; }
+.home-actions .btn-primary { flex: 0 0 auto; padding: 12px 32px; font-size: 16px; max-width: none; }
+.resume-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.resume-card-inline { flex: 1; min-width: 300px; margin-top: 0; }
 .resume-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .resume-label { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.04em; }
 .resume-title { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -96,9 +99,10 @@ h2 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
 /* 今日のチェックリスト */
 .todo-section { margin-top: 32px; }
 .todo-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-.todo-input-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.todo-input-row { display: flex; gap: 12px; margin-bottom: 8px; }
 .todo-input { flex: 1; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; background: var(--bg); color: var(--text); }
 .todo-input:focus { outline: none; border-color: var(--accent); }
+.todo-input::placeholder { color: transparent; }
 .todo-add { padding: 0 16px; border-radius: 8px; font-size: 14px; font-weight: 700; color: var(--accent); border: 1px solid var(--border); background: var(--surface); transition: 0.2s; display: flex; align-items: center; gap: 6px; }
 .todo-add:hover { background: var(--accent-bg); border-color: var(--accent); }
 .todo-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
@@ -110,7 +114,6 @@ h2 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
 .todo-text { flex: 1; font-size: 14px; font-weight: 500; }
 .todo-del { color: var(--text-muted); font-size: 16px; line-height: 1; padding: 4px 8px; border-radius: 6px; transition: 0.2s; }
 .todo-del:hover { color: var(--red); background: var(--bg); }
-.todo-empty { color: var(--text-muted); font-size: 13px; padding: 8px 0; }
 
 /* 称号バッジ */
 .rank-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--accent-bg); color: var(--accent); margin-right: 8px; vertical-align: middle; }
@@ -173,8 +176,9 @@ html[data-theme="dark"] .rank-badge { background: #1864ab; color: #d0ebff; }
 .memo-btn svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
 .memo-btn span { font-size: 10px; font-weight: 700; }
 
-.quiz-options { padding: 0 32px 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-@media (max-width: 600px) { .quiz-options { grid-template-columns: 1fr; } }
+/* 選択肢の幅を広く */
+.quiz-options { padding: 0 48px 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1000px; margin: 0 auto; }
+@media (max-width: 600px) { .quiz-options { grid-template-columns: 1fr; padding: 0 24px 24px; } }
 .quiz-opt {
   padding: 32px 24px; font-size: 24px; font-weight: 700; border-radius: 16px; border: 2px solid var(--border);
   background: var(--surface); color: var(--text); position: relative; transition: all 0.2s; box-shadow: 0 4px 0 var(--border);
@@ -186,20 +190,47 @@ html[data-theme="dark"] .rank-badge { background: #1864ab; color: #d0ebff; }
 .quiz-opt.correct::after { content: '○'; position: absolute; right: 24px; font-size: 28px; top: 50%; transform: translateY(-50%); }
 .quiz-opt.wrong::after { content: '×'; position: absolute; right: 24px; font-size: 28px; top: 50%; transform: translateY(-50%); }
 
-/* メモモーダル */
+/* 解説と次へのボタンエリア */
+.quiz-feedback-area { padding: 24px 32px; background: var(--surface); border-top: 1px solid var(--border); display: none; animation: fadeIn 0.3s ease; }
+.quiz-feedback-area.show { display: flex; flex-direction: column; gap: 16px; }
+.feedback-text { font-size: 15px; font-weight: 600; line-height: 1.6; }
+.feedback-text.correct { color: var(--green); }
+.feedback-text.wrong { color: var(--red); }
+.feedback-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 結果画面を幅広に */
+.quiz-result-wrapper { max-width: 800px; margin: 0 auto; padding: 64px 32px; }
+
+/* メモモーダル（ドラッグ＆リサイズ対応） */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
 .modal-overlay.open { display: flex; }
-.memo-modal { background: var(--surface); width: 100%; max-width: 700px; height: 85vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.2); }
-.memo-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg); }
+.memo-modal { 
+  background: var(--surface); 
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px; max-width: 100%;
+  height: 85vh;
+  border-radius: 16px; 
+  display: flex; flex-direction: column; 
+  overflow: hidden; 
+  box-shadow: 0 24px 48px rgba(0,0,0,0.4); 
+  resize: both;
+  min-width: 300px;
+  min-height: 300px;
+  z-index: 101;
+}
+.memo-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg); cursor: move; user-select: none; }
 .memo-title { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
 .memo-actions { display: flex; gap: 16px; }
 .memo-btn-text { font-size: 14px; font-weight: 600; color: var(--text-muted); transition: 0.2s; }
 .memo-btn-text:hover { color: var(--text); }
 .memo-btn-close { font-size: 14px; font-weight: 600; background: var(--accent); color: #fff; padding: 8px 16px; border-radius: 24px; transition: 0.2s; }
 .memo-btn-close:hover { opacity: 0.9; }
-.memo-canvas-wrap { flex: 1; background: #fff; position: relative; }
+.memo-canvas-wrap { flex: 1; background: #fff; position: relative; overflow: hidden; }
 html[data-theme="dark"] .memo-canvas-wrap { background: #2a2a2a; }
-.memo-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+.memo-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; display: block; }
 .memo-tools { padding: 16px 24px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; }
 .memo-tool { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); transition: 0.2s; padding: 8px 16px; border-radius: 8px; }
 .memo-tool:hover { background: var(--bg); color: var(--text); }
@@ -237,31 +268,27 @@ html[data-theme="dark"] .memo-canvas-wrap { background: #2a2a2a; }
 /* 汎用フォーム */
 .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
 .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 15px; background: var(--bg); color: var(--text); }
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
 
-/* ① ホームのボタンと前回の続きを横並びにする */
-.home-actions { display: flex; gap: 16px; align-items: stretch; margin-top: 40px; flex-wrap: wrap; }
-.home-actions .btn-primary { flex: 1; max-width: 300px; font-size: 16px; }
-.resume-card-inline { flex: 2; margin-top: 0; min-width: 300px; }
+/* タイマー・グラフの微調整 */
+#timer-display { font-variant-numeric: tabular-nums; }
 
-/* ② 今日やることのリストをシンプルに */
-.todo-input-row { margin-bottom: 8px; }
-.todo-input::placeholder { color: transparent; }
-
-/* ⑥ 正解・不正解の色 */
-.quiz-opt.correct { background: var(--green); color: #fff; border-color: var(--green); }
-.quiz-opt.wrong { background: var(--red); color: #fff; border-color: var(--red); }
-
-/* ⑧ 解説と次へのボタンエリア */
-.quiz-feedback-area {
-  padding: 24px 32px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  display: none;
-  animation: fadeIn 0.3s ease;
+/* スマホ対応（クイズ選択肢など） */
+@media (max-width: 768px) {
+  .home-actions { flex-direction: column; }
+  .home-actions .btn-primary { width: 100%; max-width: none; }
+  .resume-card-inline { min-width: auto; }
+  .quiz-options { grid-template-columns: 1fr; padding: 0 16px 24px; gap: 16px; }
+  .quiz-opt { padding: 24px 16px; font-size: 20px; }
+  .quiz-q-text { font-size: 24px; }
+  .quiz-result-wrapper { padding: 32px 16px; }
+  .memo-modal { width: 95vw; height: 90vh; }
+  .history-row { grid-template-columns: 70px 1fr 1fr 80px; gap: 8px; padding: 10px 12px; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .unit-layout { flex-direction: column; }
+  .unit-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 24px; flex-direction: row; justify-content: space-between; align-items: center; }
+  .unit-sidebar-title { margin-bottom: 0; }
+  .progress-ring { width: 80px; height: 80px; font-size: 20px; }
+  .unit-main { padding: 24px 16px; }
+  .unit-tabs { gap: 16px; }
 }
-.quiz-feedback-area.show { display: flex; flex-direction: column; gap: 16px; }
-.feedback-text { font-size: 15px; font-weight: 600; line-height: 1.6; }
-.feedback-text.correct { color: var(--green); }
-.feedback-text.wrong { color: var(--red); }
-.feedback-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
