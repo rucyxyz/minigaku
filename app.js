@@ -3,7 +3,7 @@
    ========================================================================= */
 const KEYS = {
   THEME:"sf.theme", PROGRESS:"sf.progress", SESSIONS:"sf.sessions", USER:"sf.user", USERS:"sf.users",
-  LAST:"sf.last", TODOS:"sf.todos"
+  LAST:"sf.last", TODOS:"sf.todos", MEMO:"sf.memo"
 };
 
 function load(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
@@ -380,7 +380,7 @@ window.drawUnits = (stage, subject, grade) => {
 };
 
 /* =========================================================================
-   5. クイズ画面（①,③,④,⑤,⑦,⑧ 対応）
+   5. クイズ画面（②解説・⑤記号削除・⑥メモ保存に対応）
    ========================================================================= */
 window.renderQuizPage = (unitTitle, subject, stage, grade) => {
   pageTitle.textContent = unitTitle;
@@ -433,7 +433,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
     const correctCount = answers.filter(a => a === true).length;
     const accuracy = answers.length > 0 ? Math.round((correctCount/answers.length)*100) : 0;
 
-    // ⑦ 問題文の記号を除外
+    // ⑤ 問題文の記号を除外
     const cleanQ = String(q.q).replace(/[「」『』()（）]/g, '');
 
     app.innerHTML = `
@@ -466,7 +466,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
                 if (i === q.a) cls += " correct";
                 else if (i === selected) cls += " wrong";
               }
-              // ⑦ 選択肢の記号を除外
+              // ⑤ 選択肢の記号を除外
               const cleanOpt = String(opt).replace(/[「」『』()（）、,\.\s]/g, '');
               return `<button class="${cls}" onclick="window._sel(${i})" ${selected!==null?"disabled":""}>${esc(cleanOpt)}</button>`;
             }).join("")}
@@ -476,12 +476,10 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
             ${selected !== null ? `
               <div class="feedback-text ${selected === q.a ? 'correct' : 'wrong'}">
                 ${selected === q.a ? '正解！' : '不正解...'} 
-                <br><span style="color:var(--text-muted); font-weight:400; font-size:15px; display:block; margin-top:8px;">
-                  解説: ${esc(q.exp || "この問題の詳しい解説はありません。")}
-                </span>
               </div>
               <div class="feedback-actions">
-                <button class="btn btn-primary" style="padding:12px 32px;" onclick="window._nextQ()">次へ</button>
+                <button class="btn" style="padding:10px 24px; font-size:14px;" onclick="window._showExplanation('${esc(q.exp || '')}')">解説</button>
+                <button class="btn btn-primary" style="padding:10px 32px; font-size:14px;" onclick="window._nextQ()">次へ</button>
               </div>
             ` : ''}
           </div>
@@ -494,7 +492,6 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       selected = i;
       answers[currentQ] = (i === q.a);
       
-      // ① 音量アップ (gain 0.5)
       try {
         const actx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = actx.createOscillator();
@@ -502,7 +499,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
         osc.connect(gain);
         gain.connect(actx.destination);
         if (i === q.a) osc.frequency.value = 880;
-        else osc.frequency.value = 300; // 不正解の音を少し高くして聞こえやすく
+        else osc.frequency.value = 300;
         gain.gain.setValueAtTime(0.5, actx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.3);
         osc.start();
@@ -516,6 +513,17 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       currentQ++;
       selected = null;
       draw();
+    };
+
+    window._showExplanation = (expText) => {
+      const safeExp = expText || "この問題の詳しい解説はありません。";
+      showModal(`
+        <h3 style="margin-bottom:16px; font-size:18px; font-weight:700;">解説</h3>
+        <p style="font-size:15px; line-height:1.8;">${esc(safeExp)}</p>
+        <div style="display:flex; justify-content:flex-end; margin-top:24px;">
+          <button class="btn btn-primary" onclick="window.closeModal()">閉じる</button>
+        </div>
+      `);
     };
 
     window._openMemo = () => {
@@ -554,7 +562,6 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       document.body.appendChild(overlay);
       window._initCanvas();
       
-      // ⑧ ドラッグ移動処理
       const modal = document.getElementById("memo-window");
       const handle = document.getElementById("memo-drag-handle");
       let isDragging = false, startX, startY, startLeft, startTop;
@@ -579,16 +586,18 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
         document.body.style.userSelect = '';
       });
     };
+    
     window._closeMemo = () => {
       const modal = document.getElementById("memo-modal");
       if (modal) modal.remove();
+      saveCanvasToStorage(); // ⑥ 閉じる時に保存
     };
   }
   draw();
 };
 
 /* =========================================================================
-   6. メモ（手書きキャンバス）機能
+   6. メモ（手書きキャンバス）機能（⑥保存・復元対応）
    ========================================================================= */
 let canvas, ctx, isDrawing = false, currentTool = 'pen';
 let strokes = [], currentStroke = [], redoStack = [];
@@ -599,6 +608,12 @@ window._initCanvas = () => {
   const rect = canvas.parentElement.getBoundingClientRect();
   canvas.width = rect.width; canvas.height = rect.height;
   ctx.lineCap = "round"; ctx.lineJoin = "round";
+  
+  // ⑥ 保存されたデータを復元
+  const savedStrokes = load(KEYS.MEMO, []);
+  strokes = savedStrokes;
+  redrawCanvas();
+
   canvas.addEventListener("mousedown", startDrawing);
   canvas.addEventListener("mousemove", draw);
   canvas.addEventListener("mouseup", stopDrawing);
@@ -646,7 +661,7 @@ window._setTool = (tool) => {
   document.getElementById("tool-eraser").classList.toggle("active", tool==='eraser');
 };
 
-window._clearMemo = () => { ctx.clearRect(0,0,canvas.width,canvas.height); strokes=[]; redoStack=[]; };
+window._clearMemo = () => { ctx.clearRect(0,0,canvas.width,canvas.height); strokes=[]; redoStack=[]; saveCanvasToStorage(); };
 window._memoUndo = () => { if(!strokes.length) return; redoStack.push(strokes.pop()); redrawCanvas(); };
 window._memoRedo = () => { if(!redoStack.length) return; strokes.push(redoStack.pop()); redrawCanvas(); };
 
@@ -668,8 +683,17 @@ function redrawCanvas(){
   ctx.globalCompositeOperation = 'source-over';
 }
 
+// ⑥ ストレージに保存
+function saveCanvasToStorage() {
+  if(strokes && strokes.length > 0) {
+    save(KEYS.MEMO, strokes);
+  } else {
+    localStorage.removeItem(KEYS.MEMO);
+  }
+}
+
 /* =========================================================================
-   7. 記録画面（⑥ 色分け確実化）
+   7. 記録画面（⑦ 色分け修正）
    ========================================================================= */
 window.renderRecordPage = () => {
   const sessions = getSessions();
@@ -678,7 +702,9 @@ window.renderRecordPage = () => {
   const s = streak();
   const total = totalMinutes();
 
+  // ⑦ ラベルから教科を厳密に判定して色を返す
   function getSubjectColor(label) {
+    if (!label) return "#adb5bd";
     if (label.includes("算数") || label.includes("数学")) return "#228be6";
     if (label.includes("理科")) return "#40c057";
     if (label.includes("社会")) return "#fab005";
@@ -697,7 +723,6 @@ window.renderRecordPage = () => {
     
     const subjectMinutes = {};
     daySessions.forEach(ses => {
-      // 教科名（ラベル）を元に色を決定
       const color = getSubjectColor(ses.label);
       subjectMinutes[color] = (subjectMinutes[color] || 0) + ses.minutes;
     });
