@@ -237,3 +237,31 @@ html[data-theme="dark"] .memo-canvas-wrap { background: #2a2a2a; }
 /* 汎用フォーム */
 .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
 .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 15px; background: var(--bg); color: var(--text); }
+
+/* ① ホームのボタンと前回の続きを横並びにする */
+.home-actions { display: flex; gap: 16px; align-items: stretch; margin-top: 40px; flex-wrap: wrap; }
+.home-actions .btn-primary { flex: 1; max-width: 300px; font-size: 16px; }
+.resume-card-inline { flex: 2; margin-top: 0; min-width: 300px; }
+
+/* ② 今日やることのリストをシンプルに */
+.todo-input-row { margin-bottom: 8px; }
+.todo-input::placeholder { color: transparent; }
+
+/* ⑥ 正解・不正解の色 */
+.quiz-opt.correct { background: var(--green); color: #fff; border-color: var(--green); }
+.quiz-opt.wrong { background: var(--red); color: #fff; border-color: var(--red); }
+
+/* ⑧ 解説と次へのボタンエリア */
+.quiz-feedback-area {
+  padding: 24px 32px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.quiz-feedback-area.show { display: flex; flex-direction: column; gap: 16px; }
+.feedback-text { font-size: 15px; font-weight: 600; line-height: 1.6; }
+.feedback-text.correct { color: var(--green); }
+.feedback-text.wrong { color: var(--red); }
+.feedback-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
