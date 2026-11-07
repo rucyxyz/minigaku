@@ -510,7 +510,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       overlay.innerHTML = `
         <div class="memo-modal" id="memo-window">
           <div class="memo-grabber" id="memo-grabber"></div>
-          <div class="memo-header">
+          <div class="memo-header" id="memo-header">
             <div class="memo-title">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
               メモ
@@ -541,6 +541,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       window._initCanvas();
       
       const modal = document.getElementById("memo-window");
+      const header = document.getElementById("memo-header");
       const grabber = document.getElementById("memo-grabber");
       
       const initialLeft = (window.innerWidth - 700) / 2;
@@ -552,8 +553,8 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       let isMoving = false, moveStartX, moveStartY, moveStartLeft, moveStartTop;
       let isResizing = false, resizeStartY, resizeStartTop, resizeStartHeight;
 
-      modal.addEventListener("mousedown", (e) => {
-        if (e.target.closest('.memo-grabber')) return;
+      header.addEventListener("mousedown", (e) => {
+        if (e.target.closest('.memo-actions')) return;
         isMoving = true;
         moveStartX = e.clientX; moveStartY = e.clientY;
         moveStartLeft = modal.offsetLeft; moveStartTop = modal.offsetTop;
