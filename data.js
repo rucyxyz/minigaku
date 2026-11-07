@@ -4725,7 +4725,6 @@ const QUESTIONS = {
   ]
 };
   
-/* ===== 問題取得（選択肢シャッフル＋正解位置の偏り補正） ===== */
 function shuffleArray(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -4735,33 +4734,31 @@ function shuffleArray(arr) {
   return a;
 }
 
-function generateQuestions(unitName) {
+function generateQuestions(unitName, subjectName = "") {
   const base = QUESTIONS[unitName];
   if (!base) {
-    // 未登録単元はフォールバック
     return Array.from({ length: 10 }, (_, i) => ({
       q: `「${unitName}」の確認問題 ${i + 1}`,
       opts: ["選択肢A", "選択肢B", "選択肢C", "選択肢D"],
-      a: i % 4
+      a: i % 4,
+      subject: subjectName
     }));
   }
 
-  // 問題順をシャッフル
   const qs = shuffleArray(base);
 
-  // 各問題の選択肢をシャッフルし、正解位置を再計算
   const shuffled = qs.map(q => {
     const correctText = q.opts[q.a];
     const opts = shuffleArray(q.opts);
     const a = opts.indexOf(correctText);
-    return { q: q.q, opts, a };
+    // 解説（exp）がない場合は自動生成
+    const expText = q.exp || `正解は「${correctText}」です。この単元のポイントを確認してみましょう。`;
+    return { q: q.q, opts, a, exp: expText, subject: subjectName };
   });
 
-  // 正解位置の偏りを補正（0〜3ができるだけ均等になるように並べ替え）
   const buckets = [[], [], [], []];
   shuffled.forEach(item => buckets[item.a].push(item));
   const ordered = [];
-  // ラウンドロビンで0,1,2,3の順に取り出し、足りない分は残りから補充
   let idx = [0, 0, 0, 0];
   const target = shuffled.length;
   let turn = Math.floor(Math.random() * 4);
@@ -4778,7 +4775,6 @@ function generateQuestions(unitName) {
     }
     if (!picked) break;
   }
-  // 念のため残りを追加
   for (let b = 0; b < 4; b++) {
     while (idx[b] < buckets[b].length) ordered.push(buckets[b][idx[b]++]);
   }
