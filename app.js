@@ -1,6 +1,3 @@
-/* =========================================================================
-   1. ストレージ・アカウント・学習記録関連
-   ========================================================================= */
 const KEYS = {
   THEME:"sf.theme", PROGRESS:"sf.progress", SESSIONS:"sf.sessions", USER:"sf.user", USERS:"sf.users",
   LAST:"sf.last", TODOS:"sf.todos", MEMO:"sf.memo"
@@ -104,9 +101,6 @@ function setLastStudy(obj) { save(KEYS.LAST, obj); }
 function getTodos() { return load(KEYS.TODOS, []); }
 function saveTodos(arr) { save(KEYS.TODOS, arr); }
 
-/* =========================================================================
-   2. 画面描画・基本ロジック
-   ========================================================================= */
 const app = document.getElementById("app");
 const pageTitle = document.getElementById("page-title");
 
@@ -182,9 +176,6 @@ function ringSvg(percent, size=64, stroke=6) {
   `;
 }
 
-/* =========================================================================
-   3. ホーム画面
-   ========================================================================= */
 window.renderHomePage = () => {
   const tMin = todayMinutes();
   const s = streak();
@@ -216,7 +207,7 @@ window.renderHomePage = () => {
     <div class="home-actions">
       <button class="btn btn-primary" onclick="window.navigateTo('learn')">学習をはじめる</button>
       
-      <div class="resume-card resume-card-inline">
+      <div class="resume-card">
         <div class="resume-left">
           <div class="resume-label">前回の続き</div>
           ${last
@@ -291,9 +282,6 @@ window.deleteTodo = (i) => {
   window.renderTodos();
 };
 
-/* =========================================================================
-   4. 学習トップ・単元ページ
-   ========================================================================= */
 window.renderLearnIndex = () => {
   let html = `<div class="eboard-header">教科の一覧</div><div class="eboard-columns">`;
   for (const [stage, subjects] of Object.entries(CURRICULUM)) {
@@ -379,9 +367,6 @@ window.drawUnits = (stage, subject, grade) => {
   }).join("");
 };
 
-/* =========================================================================
-   5. クイズ画面（②解説・⑤記号削除・⑥メモ保存に対応）
-   ========================================================================= */
 window.renderQuizPage = (unitTitle, subject, stage, grade) => {
   pageTitle.textContent = unitTitle;
   const questions = generateQuestions(unitTitle, subject);
@@ -406,7 +391,9 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       const total = questions.length;
       const rate = Math.round((correct/total)*100);
       setProgress(unitTitle, correct, total);
-      addSession(unitTitle, Math.max(1, Math.round((Date.now()-startTime)/60000)));
+      
+      const sessionLabel = subject ? `${subject}：${unitTitle}` : unitTitle;
+      addSession(sessionLabel, Math.max(1, Math.round((Date.now()-startTime)/60000)));
       setLastStudy({ unit: unitTitle, subject: subject || "", rate });
 
       app.innerHTML = `
@@ -433,8 +420,9 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
     const correctCount = answers.filter(a => a === true).length;
     const accuracy = answers.length > 0 ? Math.round((correctCount/answers.length)*100) : 0;
 
-    // ⑤ 問題文の記号を除外
-    const cleanQ = String(q.q).replace(/[「」『』()（）]/g, '');
+    let cleanQ = String(q.q);
+    cleanQ = cleanQ.replace(/[「」『』()（）]/g, '');
+    cleanQ = cleanQ.replace(/（※\d+回\d+問）/g, '');
 
     app.innerHTML = `
       <div class="quiz-wrapper" style="max-width:1000px;">
@@ -466,7 +454,6 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
                 if (i === q.a) cls += " correct";
                 else if (i === selected) cls += " wrong";
               }
-              // ⑤ 選択肢の記号を除外
               const cleanOpt = String(opt).replace(/[「」『』()（）、,\.\s]/g, '');
               return `<button class="${cls}" onclick="window._sel(${i})" ${selected!==null?"disabled":""}>${esc(cleanOpt)}</button>`;
             }).join("")}
@@ -474,12 +461,19 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
           
           <div class="quiz-feedback-area ${selected!==null?'show':''}" id="feedback-area">
             ${selected !== null ? `
-              <div class="feedback-text ${selected === q.a ? 'correct' : 'wrong'}">
-                ${selected === q.a ? '正解！' : '不正解...'} 
-              </div>
-              <div class="feedback-actions">
-                <button class="btn" style="padding:10px 24px; font-size:14px;" onclick="window._showExplanation('${esc(q.exp || '')}')">解説</button>
-                <button class="btn btn-primary" style="padding:10px 32px; font-size:14px;" onclick="window._nextQ()">次へ</button>
+              <div style="display:flex; flex-direction:column; width:100%; gap:16px;">
+                <div class="feedback-text ${selected === q.a ? 'correct' : 'wrong'}" style="font-size:16px;">
+                  ${selected === q.a ? '正解！' : '不正解...'} 
+                </div>
+                ${selected === q.a ? '' : `
+                  <div style="background:var(--bg); padding:16px; border-radius:8px; font-size:14px; line-height:1.6; color:var(--text);">
+                    <div style="font-weight:700; color:var(--accent); margin-bottom:4px;">解説</div>
+                    ${esc(q.exp || 'この問題の詳しい解説はありません。')}
+                  </div>
+                `}
+                <div class="feedback-actions">
+                  <button class="btn btn-primary" style="padding:10px 32px; font-size:14px;" onclick="window._nextQ()">次へ</button>
+                </div>
               </div>
             ` : ''}
           </div>
@@ -513,17 +507,6 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       currentQ++;
       selected = null;
       draw();
-    };
-
-    window._showExplanation = (expText) => {
-      const safeExp = expText || "この問題の詳しい解説はありません。";
-      showModal(`
-        <h3 style="margin-bottom:16px; font-size:18px; font-weight:700;">解説</h3>
-        <p style="font-size:15px; line-height:1.8;">${esc(safeExp)}</p>
-        <div style="display:flex; justify-content:flex-end; margin-top:24px;">
-          <button class="btn btn-primary" onclick="window.closeModal()">閉じる</button>
-        </div>
-      `);
     };
 
     window._openMemo = () => {
@@ -590,15 +573,12 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
     window._closeMemo = () => {
       const modal = document.getElementById("memo-modal");
       if (modal) modal.remove();
-      saveCanvasToStorage(); // ⑥ 閉じる時に保存
+      saveCanvasToStorage();
     };
   }
   draw();
 };
 
-/* =========================================================================
-   6. メモ（手書きキャンバス）機能（⑥保存・復元対応）
-   ========================================================================= */
 let canvas, ctx, isDrawing = false, currentTool = 'pen';
 let strokes = [], currentStroke = [], redoStack = [];
 
@@ -609,7 +589,6 @@ window._initCanvas = () => {
   canvas.width = rect.width; canvas.height = rect.height;
   ctx.lineCap = "round"; ctx.lineJoin = "round";
   
-  // ⑥ 保存されたデータを復元
   const savedStrokes = load(KEYS.MEMO, []);
   strokes = savedStrokes;
   redrawCanvas();
@@ -683,7 +662,6 @@ function redrawCanvas(){
   ctx.globalCompositeOperation = 'source-over';
 }
 
-// ⑥ ストレージに保存
 function saveCanvasToStorage() {
   if(strokes && strokes.length > 0) {
     save(KEYS.MEMO, strokes);
@@ -692,9 +670,6 @@ function saveCanvasToStorage() {
   }
 }
 
-/* =========================================================================
-   7. 記録画面（⑦ 色分け修正）
-   ========================================================================= */
 window.renderRecordPage = () => {
   const sessions = getSessions();
   const tMin = todayMinutes();
@@ -702,7 +677,6 @@ window.renderRecordPage = () => {
   const s = streak();
   const total = totalMinutes();
 
-  // ⑦ ラベルから教科を厳密に判定して色を返す
   function getSubjectColor(label) {
     if (!label) return "#adb5bd";
     if (label.includes("算数") || label.includes("数学")) return "#228be6";
@@ -821,9 +795,6 @@ window.renderRecordPage = () => {
   };
 };
 
-/* =========================================================================
-   8. プロフィール・認証
-   ========================================================================= */
 window.renderProfilePage = () => {
   const user = getCurrentUser();
   if (!user) {
@@ -952,9 +923,6 @@ window.closeModal = () => {
   if (overlay) overlay.classList.remove("open");
 };
 
-/* =========================================================================
-   9. 初期化
-   ========================================================================= */
 renderAuthButtons();
 renderSidebarFooter();
 window.navigateTo("home");
