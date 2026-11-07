@@ -1,278 +1,928 @@
-:root {
-  --bg: #f8f9fa; --surface: #ffffff; --text: #212529; --text-muted: #868e96;
-  --border: #dee2e6; --accent: #228be6; --accent-bg: #e7f5ff;
-  --green: #40c057; --red: #fa5252; --yellow: #fab005; --orange: #fd7e14;
-  --radius: 12px;
-  --font: "Inter", "Noto Sans JP", sans-serif;
-  --sidebar-w: 240px;
+const KEYS = {
+  THEME:"sf.theme", PROGRESS:"sf.progress", SESSIONS:"sf.sessions", USER:"sf.user", USERS:"sf.users",
+  LAST:"sf.last", TODOS:"sf.todos", MEMO:"sf.memo"
+};
+
+function load(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
+function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function fmtMin(m) { if (m<60) return m+"分"; const h=Math.floor(m/60), r=m%60; return r?`${h}時間${r}分`:`${h}時間`; }
+function esc(s) { return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function initTheme() {
+  const saved = load(KEYS.THEME, null);
+  const t = saved || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  document.documentElement.setAttribute("data-theme", t);
 }
-html[data-theme="dark"] {
-  --bg: #121212; --surface: #1e1e1e; --text: #f8f9fa; --text-muted: #adb5bd;
-  --border: #343a40; --accent: #4dabf7; --accent-bg: #1864ab;
+initTheme();
+document.getElementById("theme-btn").onclick = () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  save(KEYS.THEME, next);
+};
+
+function getCurrentUser() { return load(KEYS.USER, null); }
+function setCurrentUser(u) { save(KEYS.USER, u); }
+function getUsers() { return load(KEYS.USERS, {}); }
+function registerUser(email, password, name) {
+  const users = getUsers();
+  if (users[email]) return { ok:false, msg:"このメールアドレスは既に登録されています。" };
+  users[email] = { email, password, name, bio:"", createdAt:Date.now() };
+  save(KEYS.USERS, users);
+  setCurrentUser({ email, name });
+  return { ok:true };
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
-a { color: inherit; text-decoration: none; }
-button { font-family: inherit; cursor: pointer; border: none; background: none; }
-
-.app { display: flex; min-height: 100vh; }
-
-.sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); position: fixed; top: 0; bottom: 0; left: 0; z-index: 40; display: flex; flex-direction: column; transition: transform 0.3s; }
-.sidebar-main { flex: 1; display: flex; flex-direction: column; padding-top: 32px; }
-.brand { padding: 0 24px 32px; font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
-.nav { display: flex; flex-direction: column; gap: 8px; padding: 0 16px; }
-.nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; color: var(--text-muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-.nav-item:hover { background: var(--bg); color: var(--text); }
-.nav-item.active { background: var(--accent-bg); color: var(--accent); }
-.nav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
-.sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
-
-.main { flex: 1; margin-left: var(--sidebar-w); display: flex; flex-direction: column; }
-.topbar { height: 64px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; position: sticky; top: 0; z-index: 30; }
-.topbar-left { display: flex; align-items: center; gap: 12px; }
-.topbar-title { font-size: 16px; font-weight: 700; }
-.topbar-actions { display: flex; align-items: center; gap: 16px; }
-.theme-toggle { padding: 8px; border-radius: 8px; color: var(--text-muted); transition: 0.2s; }
-.theme-toggle:hover { background: var(--bg); }
-.theme-toggle svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
-
-.auth-buttons { display: flex; gap: 8px; }
-.auth-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: 0.2s; }
-.auth-btn:hover { background: var(--bg); }
-.auth-btn.primary { background: var(--text); color: var(--surface); border-color: var(--text); }
-.auth-btn.primary:hover { opacity: 0.8; }
-html[data-theme="dark"] .auth-btn { border-color: #555; color: #fff; }
-html[data-theme="dark"] .auth-btn:hover { background: #333; }
-html[data-theme="dark"] .auth-btn.primary { background: #fff; color: #000; border-color: #fff; }
-
-.content { padding: 40px 32px 100px; max-width: 1000px; margin: 0 auto; width: 100%; flex: 1; }
-.mobile-menu { display: none; padding: 8px; color: var(--text); }
-@media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .main { margin-left: 0; }
-  .mobile-menu { display: block; }
-  .content { padding: 24px 16px 100px; }
-  .topbar { padding: 0 16px; }
-  .auth-buttons { display: none; }
+function loginUser(email, password) {
+  const users = getUsers();
+  if (!users[email] || users[email].password !== password) return { ok:false, msg:"メールアドレスまたはパスワードが違います。" };
+  setCurrentUser({ email, name:users[email].name });
+  return { ok:true };
+}
+function logout() { localStorage.removeItem(KEYS.USER); }
+function updateProfile(name, bio) {
+  const cur = getCurrentUser(); if (!cur) return;
+  const users = getUsers();
+  if (users[cur.email]) { users[cur.email].name = name; users[cur.email].bio = bio; save(KEYS.USERS, users); }
+  setCurrentUser({ ...cur, name });
 }
 
-h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
-h2 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
-.muted { color: var(--text-muted); }
-.page-desc { color: var(--text-muted); font-size: 15px; margin-bottom: 32px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: 0.2s; }
-.btn:hover { background: var(--bg); }
-.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-.btn-primary:hover { opacity: 0.9; }
-
-.hero-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.hero-sub { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
-
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; }
-.stat-card { padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-.stat-card .label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
-.stat-card .value { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; }
-
-.stat-card.achievement { display: flex; align-items: center; gap: 16px; }
-.ring-wrap { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
-.ring-svg { transform: rotate(-90deg); width: 64px; height: 64px; }
-.ring-bg { stroke: var(--border); }
-.ring-fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.6s cubic-bezier(.4,0,.2,1); }
-.ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--accent); }
-.achievement-text .value { font-size: 28px; }
-
-.home-actions { display: flex; align-items: stretch; gap: 16px; margin-top: 40px; flex-wrap: wrap; }
-.resume-card { flex: 1; min-width: 300px; display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
-.home-actions > .btn-primary { flex: 0 0 auto; padding: 0 32px; height: auto; min-height: 60px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius); font-size: 15px; }
-.resume-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.resume-label { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.04em; }
-.resume-title { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.resume-meta { font-size: 12px; color: var(--text-muted); }
-.resume-btn { flex-shrink: 0; padding: 8px 24px; font-size: 14px; }
-
-.todo-section { margin-top: 32px; }
-.todo-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-.todo-input-row { display: flex; gap: 12px; margin-bottom: 8px; }
-.todo-input { flex: 1; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; background: var(--bg); color: var(--text); }
-.todo-input:focus { outline: none; border-color: var(--accent); }
-.todo-input::placeholder { color: transparent; }
-.todo-add { padding: 0 16px; border-radius: 8px; font-size: 14px; font-weight: 700; color: var(--accent); border: 1px solid var(--border); background: var(--surface); transition: 0.2s; display: flex; align-items: center; gap: 6px; }
-.todo-add:hover { background: var(--accent-bg); border-color: var(--accent); }
-.todo-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.todo-item { display: flex; align-items: center; gap: 12px; padding: 10px 8px; border-bottom: 1px solid var(--border); }
-.todo-item:last-child { border-bottom: none; }
-.todo-check { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 700; transition: 0.2s; }
-.todo-item.done .todo-check { background: var(--accent); border-color: var(--accent); }
-.todo-item.done .todo-text { text-decoration: line-through; color: var(--text-muted); }
-.todo-text { flex: 1; font-size: 14px; font-weight: 500; }
-.todo-del { color: var(--text-muted); font-size: 16px; line-height: 1; padding: 4px 8px; border-radius: 6px; transition: 0.2s; }
-.todo-del:hover { color: var(--red); background: var(--bg); }
-
-.rank-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--accent-bg); color: var(--accent); margin-right: 8px; vertical-align: middle; }
-html[data-theme="dark"] .rank-badge { background: #1864ab; color: #d0ebff; }
-
-.eboard-header { font-size: 22px; font-weight: 700; margin-bottom: 32px; }
-.eboard-columns { display: flex; gap: 32px; flex-wrap: wrap; }
-.eboard-col { flex: 1; min-width: 220px; }
-.eboard-col-title { font-size: 16px; font-weight: 700; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--border); text-align: center; }
-.eboard-subject { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; text-decoration: none; color: var(--text); padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-.eboard-subject:hover { background: var(--bg); }
-.eboard-bar { width: 6px; height: 24px; border-radius: 3px; flex-shrink: 0; }
-.eboard-subject-info { display: flex; flex-direction: column; }
-.eboard-subject-name { font-size: 16px; font-weight: 600; color: var(--accent); }
-.eboard-subject-meta { font-size: 12px; color: var(--text-muted); font-weight: 500; }
-
-.unit-header { display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 24px; }
-.unit-header span { color: var(--accent); cursor: pointer; }
-.unit-header span:hover { text-decoration: underline; }
-.unit-layout { display: flex; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-height: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-
-.unit-sidebar { width: 260px; background: var(--bg); padding: 40px 32px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; border-right: 1px solid var(--border); }
-.unit-sidebar-title { font-size: 22px; font-weight: 700; margin-bottom: 48px; align-self: flex-start; }
-.progress-ring { width: 140px; height: 140px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border); }
-
-.unit-main { flex: 1; padding: 40px; background: var(--surface); min-width: 0; }
-.unit-tabs { display: flex; gap: 32px; margin-bottom: 40px; border-bottom: 1px solid var(--border); padding-bottom: 16px; overflow-x: auto; }
-.unit-tab { font-size: 16px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding-bottom: 16px; margin-bottom: -17px; transition: 0.2s; white-space: nowrap; }
-.unit-tab:hover { color: var(--text); }
-.unit-tab.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
-
-.unit-list { list-style: none; position: relative; }
-.unit-list::before { content: ''; position: absolute; left: 28px; top: 24px; bottom: 24px; width: 2px; background: var(--border); z-index: 1; }
-.unit-item { display: flex; align-items: center; gap: 24px; margin-bottom: 24px; cursor: pointer; position: relative; z-index: 2; text-decoration: none; color: var(--text); padding: 8px 0; transition: transform 0.2s; }
-.unit-item:hover { transform: translateX(4px); }
-.unit-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; border: 4px solid var(--surface); box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex-shrink: 0; }
-.unit-icon.done { background: var(--green); }
-.unit-text { flex: 1; font-size: 18px; font-weight: 600; color: var(--text); }
-.unit-item:hover .unit-text { color: var(--accent); }
-.unit-rate { font-size: 13px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
-
-.quiz-wrapper { max-width: 800px; margin: 0 auto; }
-.quiz-container { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-.quiz-header { padding: 24px 32px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.quiz-close { font-size: 28px; color: var(--text-muted); line-height: 1; padding: 0 8px; transition: 0.2s; }
-.quiz-close:hover { color: var(--text); }
-.quiz-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
-.quiz-progress-bar { padding: 20px 32px; display: flex; align-items: center; gap: 16px; background: var(--bg); border-bottom: 1px solid var(--border); }
-.quiz-track { flex: 1; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
-.quiz-fill { height: 100%; background: var(--accent); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-.quiz-stat { font-size: 14px; font-weight: 700; color: var(--text-muted); }
-
-.quiz-question-area { padding: 64px 32px; text-align: center; position: relative; min-height: 240px; display: flex; align-items: center; justify-content: center; }
-.quiz-q-text { font-size: 32px; font-weight: 700; line-height: 1.5; letter-spacing: -0.02em; }
-.memo-btn { position: absolute; bottom: 24px; left: 32px; color: var(--text-muted); padding: 8px; border-radius: 8px; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.memo-btn:hover { background: var(--bg); color: var(--accent); }
-.memo-btn svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
-.memo-btn span { font-size: 10px; font-weight: 700; }
-
-.quiz-options { padding: 0 32px 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1000px; margin: 0 auto; }
-@media (max-width: 600px) { .quiz-options { grid-template-columns: 1fr; padding: 0 16px 16px; } }
-.quiz-opt {
-  padding: 24px 16px; font-size: 22px; font-weight: 700; border-radius: 16px; border: 2px solid var(--border);
-  background: var(--surface); color: var(--text); position: relative; transition: all 0.2s; box-shadow: 0 4px 0 var(--border);
+function greetingBase() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return "おはようございます。";
+  if (hour >= 11 && hour < 18) return "こんにちは。";
+  return "こんばんは。今日も一日お疲れ様です。";
 }
-.quiz-opt:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 0 var(--accent-bg); }
-.quiz-opt:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
-.quiz-opt.correct { background: var(--green); color: #fff; border-color: var(--green); box-shadow: 0 4px 0 #2b8a3e; }
-.quiz-opt.wrong { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 4px 0 #c92a2a; }
-.quiz-opt.correct::after { content: '○'; position: absolute; right: 24px; font-size: 28px; top: 50%; transform: translateY(-50%); }
-.quiz-opt.wrong::after { content: '×'; position: absolute; right: 24px; font-size: 28px; top: 50%; transform: translateY(-50%); }
-
-.quiz-feedback-area { padding: 20px 32px; background: var(--surface); border-top: 1px solid var(--border); display: none; animation: fadeIn 0.3s ease; }
-.quiz-feedback-area.show { display: flex; justify-content: flex-end; align-items: center; gap: 16px; }
-.feedback-text { font-size: 14px; font-weight: 600; flex: 1; }
-.feedback-text.correct { color: var(--green); }
-.feedback-text.wrong { color: var(--red); }
-.feedback-actions { display: flex; gap: 12px; flex-shrink: 0; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-
-.quiz-result-wrapper { max-width: 900px; margin: 0 auto; padding: 64px 32px; }
-
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
-.modal-overlay.open { display: flex; }
-.memo-modal { 
-  background: var(--surface); 
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 700px; max-width: 100%;
-  height: 500px;
-  border-radius: 16px; 
-  display: flex; flex-direction: column; 
-  overflow: hidden; 
-  box-shadow: 0 24px 48px rgba(0,0,0,0.4); 
-  resize: both;
-  min-width: 300px;
-  min-height: 300px;
-  z-index: 101;
-  outline: none !important;
-  border: none !important;
+function greetingWithName() {
+  const user = getCurrentUser();
+  const base = greetingBase();
+  if (!user) return base;
+  return `${user.name}さん、${base}`;
 }
-.memo-modal::after { content: ''; position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: se-resize; z-index: 102; }
-.memo-modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; box-shadow: inset 0 0 0 2px transparent; transition: box-shadow 0.2s; }
-.memo-modal:hover::before { box-shadow: none !important; }
-
-.memo-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg); cursor: move; user-select: none; }
-.memo-title { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-.memo-actions { display: flex; gap: 16px; }
-.memo-btn-text { font-size: 14px; font-weight: 600; color: var(--text-muted); transition: 0.2s; }
-.memo-btn-text:hover { color: var(--text); }
-.memo-btn-close { font-size: 14px; font-weight: 600; background: var(--accent); color: #fff; padding: 8px 16px; border-radius: 24px; transition: 0.2s; }
-.memo-btn-close:hover { opacity: 0.9; }
-.memo-canvas-wrap { flex: 1; background: #fff; position: relative; overflow: hidden; }
-html[data-theme="dark"] .memo-canvas-wrap { background: #2a2a2a; }
-.memo-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; display: block; }
-.memo-tools { padding: 16px 24px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; }
-.memo-tool { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); transition: 0.2s; padding: 8px 16px; border-radius: 8px; }
-.memo-tool:hover { background: var(--bg); color: var(--text); }
-.memo-tool.active { color: var(--accent); background: var(--accent-bg); }
-.memo-tool svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
-
-.chart-wrap { display: flex; margin-top: 24px; }
-.chart-y { width: 60px; display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text-muted); text-align: right; padding-right: 12px; height: 200px; }
-.chart-area { flex: 1; position: relative; height: 200px; border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.chart-grid { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; }
-.chart-line { border-top: 1px dashed var(--border); width: 100%; }
-.chart-bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 8px; padding: 0 12px; }
-.chart-bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
-.chart-fill { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; transition: height 0.3s; }
-.chart-x { display: flex; gap: 8px; padding: 12px 12px 0 72px; }
-.chart-x-label { flex: 1; text-align: center; font-size: 12px; font-weight: 600; color: var(--text-muted); line-height: 1.4; }
-
-.history-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-.history-row { display: grid; grid-template-columns: 88px 1fr 2fr 120px; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 13px; }
-.history-row:last-child { border-bottom: none; }
-.history-date { color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
-.history-subject { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.history-unit { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.history-rate { display: flex; align-items: center; gap: 8px; }
-.history-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.history-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; }
-.history-rate-num { font-size: 12px; font-weight: 700; color: var(--text-muted); min-width: 32px; text-align: right; }
-
-.profile-header { display: flex; align-items: center; gap: 24px; margin-bottom: 40px; }
-.profile-avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-.form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
-.form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 15px; background: var(--bg); color: var(--text); }
-.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
-
-@media (max-width: 768px) {
-  .home-actions { flex-direction: column; }
-  .home-actions .btn-primary { width: 100%; max-width: none; }
-  .resume-card { min-width: auto; }
-  .quiz-options { grid-template-columns: 1fr; padding: 0 16px 24px; gap: 16px; }
-  .quiz-opt { padding: 20px 16px; font-size: 20px; }
-  .quiz-q-text { font-size: 24px; }
-  .quiz-result-wrapper { padding: 32px 16px; }
-  .memo-modal { width: 95vw; height: 70vh; }
-  .history-row { grid-template-columns: 70px 1fr 1fr 80px; gap: 8px; padding: 10px 12px; }
-  .stat-grid { grid-template-columns: 1fr 1fr; }
-  .unit-layout { flex-direction: column; }
-  .unit-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 24px; flex-direction: row; justify-content: space-between; align-items: center; }
-  .unit-sidebar-title { margin-bottom: 0; }
-  .progress-ring { width: 80px; height: 80px; font-size: 20px; }
-  .unit-main { padding: 24px 16px; }
-  .unit-tabs { gap: 16px; }
+function rankFromStreak(days) {
+  if (days >= 100) return "👑 100日達成";
+  if (days >= 30) return "💎 30日連続";
+  if (days >= 14) return "🌟 14日連続";
+  if (days >= 7) return "🔥 7日連続";
+  if (days >= 3) return "🔥 3日連続";
+  if (days >= 1) return "✨ 学習スタート";
+  return "🌱 はじめの一歩";
 }
+
+function getProgress() { return load(KEYS.PROGRESS, {}); }
+function setProgress(id, correct, total) {
+  const p = getProgress();
+  p[id] = { correct, total, ratio: total?correct/total:0, date:todayStr() };
+  save(KEYS.PROGRESS, p);
+}
+function getSessions() { return load(KEYS.SESSIONS, []); }
+function addSession(label, minutes) {
+  if (minutes<=0) return;
+  const arr = getSessions();
+  arr.push({ date:todayStr(), label, minutes, ts:Date.now() });
+  save(KEYS.SESSIONS, arr);
+}
+function totalMinutes() { return getSessions().reduce((a,b)=>a+b.minutes,0); }
+function todayMinutes() { return getSessions().filter(s=>s.date===todayStr()).reduce((a,b)=>a+b.minutes,0); }
+function monthMinutes() { const m=todayStr().slice(0,7); return getSessions().filter(s=>s.date.slice(0,7)===m).reduce((a,b)=>a+b.minutes,0); }
+function streak() {
+  const dates = new Set(getSessions().map(s=>s.date));
+  let count = 0; const d = new Date();
+  while (true) {
+    const ds = d.toISOString().slice(0,10);
+    if (dates.has(ds)) { count++; d.setDate(d.getDate()-1); } else break;
+  }
+  return count;
+}
+
+function getLastStudy() { return load(KEYS.LAST, null); }
+function setLastStudy(obj) { save(KEYS.LAST, obj); }
+
+function getTodos() { return load(KEYS.TODOS, []); }
+function saveTodos(arr) { save(KEYS.TODOS, arr); }
+
+const app = document.getElementById("app");
+const pageTitle = document.getElementById("page-title");
+
+function renderNav(activeId) {
+  const NAV = [
+    { id:"home", label:"ホーム", icon:'<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>' },
+    { id:"learn", label:"学習", icon:'<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>' },
+    { id:"record", label:"記録", icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>' }
+  ];
+  document.getElementById("nav").innerHTML = NAV.map(n =>
+    `<a class="nav-item ${n.id===activeId?'active':''}" onclick="window.navigateTo('${n.id}')">${n.icon}<span>${n.label}</span></a>`
+  ).join("");
+}
+
+function renderAuthButtons() {
+  const user = getCurrentUser();
+  const el = document.getElementById("auth-buttons");
+  if (user) {
+    el.innerHTML = `<span class="muted" style="font-size:14px; font-weight:600;">${esc(user.name)}</span>`;
+  } else {
+    el.innerHTML = `
+      <button class="auth-btn" onclick="openLogin()">ログイン</button>
+      <button class="auth-btn primary" onclick="openRegister()">会員登録</button>
+    `;
+  }
+}
+
+function renderSidebarFooter() {
+  const el = document.getElementById("sidebar-footer");
+  el.innerHTML = `
+    <a class="nav-item" onclick="window.navigateTo('profile')">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      <span>プロフィール</span>
+    </a>`;
+}
+
+document.getElementById("menu-btn").onclick = () => document.getElementById("sidebar").classList.toggle("open");
+
+window.navigateTo = (pageId) => {
+  document.getElementById("sidebar").classList.remove("open");
+  window.scrollTo(0,0);
+  if (pageId === "home") {
+    renderNav("home"); pageTitle.textContent = "ホーム"; window.renderHomePage();
+  } else if (pageId === "learn") {
+    renderNav("learn"); pageTitle.textContent = "学習"; window.renderLearnIndex();
+  } else if (pageId === "record") {
+    renderNav("record"); pageTitle.textContent = "記録"; window.renderRecordPage();
+  } else if (pageId === "profile") {
+    renderNav(""); pageTitle.textContent = "プロフィール"; window.renderProfilePage();
+  }
+};
+
+function allUnitCount() {
+  return Object.values(CURRICULUM).reduce((a,stage)=>
+    a+Object.values(stage).reduce((b,sub)=>
+      b+Object.values(sub).reduce((c,grade)=>c+grade.length,0),0),0);
+}
+function doneUnitCount() {
+  const p = getProgress();
+  return Object.values(p).filter(r=>r.ratio>=0.8).length;
+}
+function ringSvg(percent, size=64, stroke=6) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - Math.min(100, Math.max(0, percent)) / 100);
+  return `
+    <svg class="ring-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke-width="${stroke}"></circle>
+      <circle class="ring-fg" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke-width="${stroke}"
+        stroke-dasharray="${c}" stroke-dashoffset="${offset}"></circle>
+    </svg>
+    <div class="ring-label">${Math.round(percent)}%</div>
+  `;
+}
+
+window.renderHomePage = () => {
+  const tMin = todayMinutes();
+  const s = streak();
+  const total = allUnitCount();
+  const done = doneUnitCount();
+  const percent = total ? (done/total)*100 : 0;
+  const last = getLastStudy();
+  const badge = rankFromStreak(s);
+
+  app.innerHTML = `
+    <h1 style="display:flex; align-items:center; flex-wrap:wrap;">
+      <span class="rank-badge">${badge}</span>
+      <span>${esc(greetingWithName())}</span>
+    </h1>
+    <p class="page-desc">今日も少しずつ、学習を進めましょう。</p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">今日の学習</div><div class="value">${fmtMin(tMin)}</div></div>
+      <div class="stat-card"><div class="label">連続学習</div><div class="value">${s}<small style="font-size:16px; font-weight:400; margin-left:4px;">日</small></div></div>
+      <div class="stat-card achievement">
+        <div class="ring-wrap">${ringSvg(percent)}</div>
+        <div class="achievement-text">
+          <div class="label">達成単元</div>
+          <div class="value">${done}<small style="font-size:16px; font-weight:400; margin-left:4px;"> / ${total}</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-actions">
+      <button class="btn btn-primary" onclick="window.navigateTo('learn')">学習をはじめる</button>
+      
+      <div class="resume-card">
+        <div class="resume-left">
+          <div class="resume-label">前回の続き</div>
+          ${last
+            ? `<div class="resume-title">${esc(last.unit)}</div>
+               <div class="resume-meta">${esc(last.subject||"")}${last.rate!=null?` ・ 前回 ${last.rate}%`:""}</div>`
+            : `<div class="resume-title muted">まだ学習履歴がありません</div>
+               <div class="resume-meta">「学習をはじめる」から最初の単元を選びましょう</div>`}
+        </div>
+        ${last
+          ? `<button class="btn btn-primary resume-btn" onclick="window.renderQuizPage('${esc(last.unit)}','${esc(last.subject||"")}')">再開する</button>`
+          : `<button class="btn resume-btn" onclick="window.navigateTo('learn')">単元を選ぶ</button>`}
+      </div>
+    </div>
+
+    <div class="todo-section">
+      <h2>今日やることリスト</h2>
+      <div class="todo-card">
+        <div class="todo-input-row">
+          <input class="todo-input" id="todo-input">
+          <button class="todo-add" onclick="window.addTodo()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+            追加
+          </button>
+        </div>
+        <ul class="todo-list" id="todo-list"></ul>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("todo-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") window.addTodo();
+  });
+  window.renderTodos();
+};
+
+window.renderTodos = () => {
+  const list = document.getElementById("todo-list");
+  if (!list) return;
+  const todos = getTodos();
+  if (!todos.length) {
+    list.innerHTML = "";
+    return;
+  }
+  list.innerHTML = todos.map((t, i) => `
+    <li class="todo-item ${t.done?'done':''}">
+      <button class="todo-check" onclick="window.toggleTodo(${i})">${t.done?'✓':''}</button>
+      <span class="todo-text">${esc(t.text)}</span>
+      <button class="todo-del" onclick="window.deleteTodo(${i})">×</button>
+    </li>
+  `).join("");
+};
+window.addTodo = () => {
+  const input = document.getElementById("todo-input");
+  const text = input.value.trim();
+  if (!text) return;
+  const todos = getTodos();
+  todos.push({ text, done:false, date: todayStr() });
+  saveTodos(todos);
+  input.value = "";
+  window.renderTodos();
+};
+window.toggleTodo = (i) => {
+  const todos = getTodos();
+  todos[i].done = !todos[i].done;
+  saveTodos(todos);
+  window.renderTodos();
+};
+window.deleteTodo = (i) => {
+  const todos = getTodos();
+  todos.splice(i,1);
+  saveTodos(todos);
+  window.renderTodos();
+};
+
+window.renderLearnIndex = () => {
+  let html = `<div class="eboard-header">教科の一覧</div><div class="eboard-columns">`;
+  for (const [stage, subjects] of Object.entries(CURRICULUM)) {
+    html += `<div class="eboard-col"><div class="eboard-col-title">${stage}</div>`;
+    for (const [subject, grades] of Object.entries(subjects)) {
+      let unitCount = 0;
+      for (const gradeUnits of Object.values(grades)) unitCount += gradeUnits.length;
+      let color = "#228be6";
+      if (subject === "理科") color = "#40c057";
+      if (subject === "社会") color = "#fab005";
+      if (subject === "国語" || subject === "漢字") color = "#fa5252";
+      if (subject === "英語") color = "#fd7e14";
+      html += `
+        <a class="eboard-subject" onclick="window.renderSubjectPage('${stage}','${subject}')">
+          <div class="eboard-bar" style="background:${color}"></div>
+          <div class="eboard-subject-info">
+            <div class="eboard-subject-name">${subject}</div>
+            <div class="eboard-subject-meta">${unitCount}単元</div>
+          </div>
+        </a>
+      `;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+  app.innerHTML = html;
+};
+
+window.renderSubjectPage = (stage, subject) => {
+  pageTitle.textContent = subject;
+  const subjectData = CURRICULUM[stage][subject];
+  const grades = Object.keys(subjectData);
+  const activeGrade = grades[0];
+
+  const p = getProgress();
+  const allUnits = grades.flatMap(g => subjectData[g]);
+  const doneCount = allUnits.filter(u => p[u] && p[u].ratio >= 0.8).length;
+  const rate = allUnits.length ? Math.round(doneCount/allUnits.length*100) : 0;
+
+  app.innerHTML = `
+    <div class="unit-header">
+      <span onclick="window.navigateTo('learn')">教科一覧</span> &nbsp;/&nbsp; ${esc(subject)}
+    </div>
+    <div class="unit-layout">
+      <div class="unit-sidebar">
+        <div class="unit-sidebar-title">${esc(subject)}</div>
+        <div class="progress-ring">${rate}%</div>
+      </div>
+      <div class="unit-main">
+        <div class="unit-tabs" id="unit-tabs">
+          ${grades.map(g => `<div class="unit-tab ${g===activeGrade?'active':''}" onclick="window.switchGrade(this,'${stage}','${subject}','${g}')">${g}</div>`).join("")}
+        </div>
+        <ul class="unit-list" id="unit-list"></ul>
+      </div>
+    </div>
+  `;
+  window.drawUnits(stage, subject, activeGrade);
+};
+
+window.switchGrade = (el, stage, subject, grade) => {
+  document.querySelectorAll(".unit-tab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  window.drawUnits(stage, subject, grade);
+};
+
+window.drawUnits = (stage, subject, grade) => {
+  const units = CURRICULUM[stage][subject][grade] || [];
+  const p = getProgress();
+  const list = document.getElementById("unit-list");
+  list.innerHTML = units.map((u, i) => {
+    const r = p[u];
+    const rate = r ? Math.round(r.ratio*100) : null;
+    const done = rate != null && rate >= 80;
+    return `
+      <li>
+        <div class="unit-item" onclick="window.renderQuizPage('${esc(u)}','${esc(subject)}', '${stage}', '${grade}')">
+          <div class="unit-icon ${done?'done':''}">${done?'✓':i+1}</div>
+          <div class="unit-text">${esc(u)}</div>
+          <div class="unit-rate">${rate!=null?`${rate}%`:"—"}</div>
+        </div>
+      </li>
+    `;
+  }).join("");
+};
+
+window.renderQuizPage = (unitTitle, subject, stage, grade) => {
+  pageTitle.textContent = unitTitle;
+  const questions = generateQuestions(unitTitle, subject);
+  
+  let nextUnitTitle = null;
+  if (stage && grade && subject) {
+    const units = CURRICULUM[stage][subject][grade];
+    const idx = units.indexOf(unitTitle);
+    if (idx !== -1 && idx < units.length - 1) {
+      nextUnitTitle = units[idx + 1];
+    }
+  }
+
+  let currentQ = 0;
+  let selected = null;
+  let answers = [];
+  let startTime = Date.now();
+
+  function draw() {
+    if (currentQ >= questions.length) {
+      const correct = answers.filter(a => a === true).length;
+      const total = questions.length;
+      const rate = Math.round((correct/total)*100);
+      setProgress(unitTitle, correct, total);
+      
+      const sessionLabel = subject ? `${subject}：${unitTitle}` : unitTitle;
+      addSession(sessionLabel, Math.max(1, Math.round((Date.now()-startTime)/60000)));
+      setLastStudy({ unit: unitTitle, subject: subject || "", rate });
+
+      app.innerHTML = `
+        <div class="quiz-result-wrapper">
+          <div style="text-align:center; padding:48px 0; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 4px 20px rgba(0,0,0,0.05);">
+            <h1 style="font-size:56px; margin-bottom:16px;">${correct} <span style="font-size:28px;color:var(--text-muted)">/ ${total}</span></h1>
+            <p style="font-size:20px; font-weight:600; color:var(--text-muted); margin-bottom:48px;">正答率: ${rate}%</p>
+            <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+              ${nextUnitTitle 
+                ? `<button class="btn btn-primary" style="padding:16px 32px; font-size:18px;" onclick="window.renderQuizPage('${esc(nextUnitTitle)}','${esc(subject)}', '${esc(stage)}', '${esc(grade)}')">次の単元へ</button>`
+                : `<button class="btn btn-primary" style="padding:16px 32px; font-size:18px;" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">単元一覧へ</button>`
+              }
+              <button class="btn" style="padding:16px 32px; font-size:18px;" onclick="window.renderQuizPage('${esc(unitTitle)}','${esc(subject)}', '${esc(stage)}', '${esc(grade)}')">もう一度</button>
+              <button class="btn" style="padding:16px 32px; font-size:18px;" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">元に戻る</button>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    const q = questions[currentQ];
+    const progressPercent = (currentQ/questions.length)*100;
+    const correctCount = answers.filter(a => a === true).length;
+    const accuracy = answers.length > 0 ? Math.round((correctCount/answers.length)*100) : 0;
+
+    let cleanQ = String(q.q);
+    cleanQ = cleanQ.replace(/[「」『』()（）]/g, '');
+    cleanQ = cleanQ.replace(/（※\d+回\d+問）/g, '');
+
+    app.innerHTML = `
+      <div class="quiz-wrapper" style="max-width:1000px;">
+        <div class="unit-header">
+          <span onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">元に戻る</span> &nbsp;/&nbsp; ${esc(unitTitle)}
+        </div>
+        <div class="quiz-container">
+          <div class="quiz-header">
+            <button class="quiz-close" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">×</button>
+            <div class="quiz-title">${esc(unitTitle)}</div>
+            <div style="width:24px;"></div>
+          </div>
+          <div class="quiz-progress-bar">
+            <div class="quiz-track"><div class="quiz-fill" style="width:${progressPercent}%"></div></div>
+            <div class="quiz-stat">${currentQ+1}/${questions.length}</div>
+            <div class="quiz-stat">正答率:${accuracy}%</div>
+          </div>
+          <div class="quiz-question-area">
+            <div class="quiz-q-text">${esc(cleanQ)}</div>
+            <button class="memo-btn" onclick="window._openMemo()">
+              <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              <span>Memo</span>
+            </button>
+          </div>
+          <div class="quiz-options">
+            ${q.opts.map((opt, i) => {
+              let cls = "quiz-opt";
+              if (selected !== null) {
+                if (i === q.a) cls += " correct";
+                else if (i === selected) cls += " wrong";
+              }
+              const cleanOpt = String(opt).replace(/[「」『』()（）、,\.\s]/g, '');
+              return `<button class="${cls}" onclick="window._sel(${i})" ${selected!==null?"disabled":""}>${esc(cleanOpt)}</button>`;
+            }).join("")}
+          </div>
+          
+          <div class="quiz-feedback-area ${selected!==null?'show':''}" id="feedback-area">
+            ${selected !== null ? `
+              <div style="display:flex; flex-direction:column; width:100%; gap:16px;">
+                <div class="feedback-text ${selected === q.a ? 'correct' : 'wrong'}" style="font-size:16px;">
+                  ${selected === q.a ? '正解！' : '不正解...'} 
+                </div>
+                ${selected === q.a ? '' : `
+                  <div style="background:var(--bg); padding:16px; border-radius:8px; font-size:14px; line-height:1.6; color:var(--text);">
+                    <div style="font-weight:700; color:var(--accent); margin-bottom:4px;">解説</div>
+                    ${esc(q.exp || 'この問題の詳しい解説はありません。')}
+                  </div>
+                `}
+                <div class="feedback-actions">
+                  <button class="btn btn-primary" style="padding:10px 32px; font-size:14px;" onclick="window._nextQ()">次へ</button>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+
+    window._sel = (i) => {
+      if (selected !== null) return;
+      selected = i;
+      answers[currentQ] = (i === q.a);
+      
+      try {
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        if (i === q.a) osc.frequency.value = 880;
+        else osc.frequency.value = 300;
+        gain.gain.setValueAtTime(0.5, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.3);
+        osc.start();
+        osc.stop(actx.currentTime + 0.3);
+      } catch(e) {}
+      
+      draw();
+    };
+    
+    window._nextQ = () => {
+      currentQ++;
+      selected = null;
+      draw();
+    };
+
+    window._openMemo = () => {
+      const overlay = document.createElement("div");
+      overlay.className = "modal-overlay open";
+      overlay.id = "memo-modal";
+      overlay.innerHTML = `
+        <div class="memo-modal" id="memo-window">
+          <div class="memo-header" id="memo-drag-handle">
+            <div class="memo-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              メモ
+            </div>
+            <div class="memo-actions">
+              <button class="memo-btn-text" onclick="window._clearMemo()">消す</button>
+              <button class="memo-btn-close" onclick="window._closeMemo()">閉じる</button>
+            </div>
+          </div>
+          <div class="memo-canvas-wrap"><canvas class="memo-canvas" id="memo-canvas"></canvas></div>
+          <div class="memo-tools">
+            <button class="memo-tool active" id="tool-pen" onclick="window._setTool('pen')">
+              <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>ペン
+            </button>
+            <button class="memo-tool" id="tool-eraser" onclick="window._setTool('eraser')">
+              <svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-2 2z"></path><path d="M6 11l9 9"></path></svg>消しゴム
+            </button>
+            <button class="memo-tool" onclick="window._memoUndo()">
+              <svg viewBox="0 0 24 24"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>戻る
+            </button>
+            <button class="memo-tool" onclick="window._memoRedo()">
+              <svg viewBox="0 0 24 24"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>進む
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      window._initCanvas();
+      
+      const modal = document.getElementById("memo-window");
+      const handle = document.getElementById("memo-drag-handle");
+      let isDragging = false, startX, startY, startLeft, startTop;
+      modal.style.left = '50%'; modal.style.top = '50%'; modal.style.transform = 'translate(-50%, -50%)';
+
+      handle.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        const rect = modal.getBoundingClientRect();
+        startX = e.clientX; startY = e.clientY;
+        startLeft = rect.left; startTop = rect.top;
+        modal.style.left = startLeft + 'px'; modal.style.top = startTop + 'px';
+        modal.style.transform = 'none';
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        modal.style.left = (startLeft + e.clientX - startX) + 'px';
+        modal.style.top = (startTop + e.clientY - startY) + 'px';
+      });
+      document.addEventListener("mouseup", () => {
+        isDragging = false;
+        document.body.style.userSelect = '';
+      });
+    };
+    
+    window._closeMemo = () => {
+      const modal = document.getElementById("memo-modal");
+      if (modal) modal.remove();
+      saveCanvasToStorage();
+    };
+  }
+  draw();
+};
+
+let canvas, ctx, isDrawing = false, currentTool = 'pen';
+let strokes = [], currentStroke = [], redoStack = [];
+
+window._initCanvas = () => {
+  canvas = document.getElementById("memo-canvas");
+  ctx = canvas.getContext("2d");
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width; canvas.height = rect.height;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  
+  const savedStrokes = load(KEYS.MEMO, []);
+  strokes = savedStrokes;
+  redrawCanvas();
+
+  canvas.addEventListener("mousedown", startDrawing);
+  canvas.addEventListener("mousemove", draw);
+  canvas.addEventListener("mouseup", stopDrawing);
+  canvas.addEventListener("mouseout", stopDrawing);
+  canvas.addEventListener("touchstart", (e)=>{e.preventDefault();startDrawing(e.touches[0]);},{passive:false});
+  canvas.addEventListener("touchmove", (e)=>{e.preventDefault();draw(e.touches[0]);},{passive:false});
+  canvas.addEventListener("touchend", stopDrawing);
+};
+
+function getPos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+
+function startDrawing(e){
+  isDrawing=true; const pos=getPos(e);
+  currentStroke=[{x:pos.x,y:pos.y,tool:currentTool}];
+  ctx.beginPath(); ctx.moveTo(pos.x,pos.y);
+  if(currentTool==='eraser'){ 
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth=24; 
+  }
+  else { 
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--text').trim(); 
+    ctx.lineWidth=3; 
+  }
+  redoStack=[];
+}
+
+function draw(e){
+  if(!isDrawing) return;
+  const pos=getPos(e); currentStroke.push({x:pos.x,y:pos.y,tool:currentTool});
+  ctx.lineTo(pos.x,pos.y); ctx.stroke();
+}
+
+function stopDrawing(){ 
+  if(!isDrawing) return; 
+  isDrawing=false; 
+  ctx.closePath(); 
+  strokes.push(currentStroke); 
+  currentStroke=[]; 
+}
+
+window._setTool = (tool) => {
+  currentTool = tool;
+  document.getElementById("tool-pen").classList.toggle("active", tool==='pen');
+  document.getElementById("tool-eraser").classList.toggle("active", tool==='eraser');
+};
+
+window._clearMemo = () => { ctx.clearRect(0,0,canvas.width,canvas.height); strokes=[]; redoStack=[]; saveCanvasToStorage(); };
+window._memoUndo = () => { if(!strokes.length) return; redoStack.push(strokes.pop()); redrawCanvas(); };
+window._memoRedo = () => { if(!redoStack.length) return; strokes.push(redoStack.pop()); redrawCanvas(); };
+
+function redrawCanvas(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  strokes.forEach(stroke=>{
+    ctx.beginPath(); ctx.moveTo(stroke[0].x,stroke[0].y);
+    if(stroke[0].tool==='eraser'){ 
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth=24; 
+    }
+    else { 
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--text').trim(); 
+      ctx.lineWidth=3; 
+    }
+    stroke.forEach(p=>ctx.lineTo(p.x,p.y)); ctx.stroke();
+  });
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function saveCanvasToStorage() {
+  if(strokes && strokes.length > 0) {
+    save(KEYS.MEMO, strokes);
+  } else {
+    localStorage.removeItem(KEYS.MEMO);
+  }
+}
+
+window.renderRecordPage = () => {
+  const sessions = getSessions();
+  const tMin = todayMinutes();
+  const mMin = monthMinutes();
+  const s = streak();
+  const total = totalMinutes();
+
+  function getSubjectColor(label) {
+    if (!label) return "#adb5bd";
+    if (label.includes("算数") || label.includes("数学")) return "#228be6";
+    if (label.includes("理科")) return "#40c057";
+    if (label.includes("社会")) return "#fab005";
+    if (label.includes("国語") || label.includes("漢字")) return "#fa5252";
+    if (label.includes("英語")) return "#fd7e14";
+    return "#adb5bd";
+  }
+
+  const week = [];
+  for (let i=6;i>=0;i--) {
+    const d = new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+    const daySessions = sessions.filter(x=>x.date===d);
+    const m = daySessions.reduce((a,b)=>a+b.minutes,0);
+    const dayNames = ["日","月","火","水","木","金","土"];
+    const dow = dayNames[new Date(d).getDay()];
+    
+    const subjectMinutes = {};
+    daySessions.forEach(ses => {
+      const color = getSubjectColor(ses.label);
+      subjectMinutes[color] = (subjectMinutes[color] || 0) + ses.minutes;
+    });
+
+    week.push({ date:d, min:m, dow, subjectMinutes });
+  }
+
+  const p = getProgress();
+  const history = Object.entries(p)
+    .sort((a,b)=> (b[1].date||"").localeCompare(a[1].date||""))
+    .slice(0,10)
+    .map(([unit, r]) => ({ unit, subject:"", rate: Math.round((r.ratio||0)*100), date: r.date }));
+
+  app.innerHTML = `
+    <h1>記録</h1>
+    <p class="page-desc">学習の積み重ねを確認しましょう。</p>
+
+    <div class="stat-grid" style="margin-bottom:48px;">
+      <div class="stat-card"><div class="label">今日</div><div class="value">${fmtMin(tMin)}</div></div>
+      <div class="stat-card"><div class="label">今月</div><div class="value">${fmtMin(mMin)}</div></div>
+      <div class="stat-card"><div class="label">連続</div><div class="value">${s}<small style="font-size:16px; font-weight:400; margin-left:4px;">日</small></div></div>
+      <div class="stat-card"><div class="label">総学習時間</div><div class="value">${fmtMin(total)}</div></div>
+    </div>
+
+    <h2>直近7日間</h2>
+    <div class="chart-wrap">
+      <div class="chart-y">${[4,3,2,1,0].map(v=>`<span>${v===0?'0分':v+'時間'}</span>`).join("")}</div>
+      <div class="chart-area">
+        <div class="chart-grid">${[0,1,2,3,4].map(()=>`<div class="chart-line"></div>`).join("")}</div>
+        <div class="chart-bars">
+          ${week.map(w => `
+            <div class="chart-bar" title="${fmtMin(w.min)}">
+              <div style="width:100%; display:flex; flex-direction:column-reverse; height:${(w.min/(4*60))*100}%;">
+                ${Object.entries(w.subjectMinutes).map(([color, min]) => `
+                  <div style="background:${color}; height:${(min/w.min)*100}%; width:100%;"></div>
+                `).join("")}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="chart-x">${week.map(w=>`<div class="chart-x-label">${w.date.slice(5).replace("-","/")}<br>${w.dow}</div>`).join("")}</div>
+
+    <h2 style="margin-top:48px;">タイマー</h2>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:32px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+      <div style="font-size:56px; font-weight:700; font-variant-numeric:tabular-nums; margin-bottom:32px; letter-spacing:0.05em;" id="timer-display">00:00</div>
+      <div style="display:flex; gap:16px; justify-content:center;">
+        <button class="btn btn-primary" id="timer-toggle">開始</button>
+        <button class="btn" id="timer-reset">リセット</button>
+        <button class="btn" id="timer-save">記録</button>
+      </div>
+    </div>
+
+    <h2 style="margin-top:48px;">最近の学習履歴</h2>
+    <div class="history-list">
+      ${history.length ? history.map(r=>`
+        <div class="history-row">
+          <div class="history-date">${esc(r.date||"")}</div>
+          <div class="history-subject">${esc(r.subject||"—")}</div>
+          <div class="history-unit">${esc(r.unit)}</div>
+          <div class="history-rate">
+            <div class="history-bar"><div class="history-bar-fill" style="width:${r.rate}%"></div></div>
+            <div class="history-rate-num">${r.rate}%</div>
+          </div>
+        </div>
+      `).join("") : `<div style="padding:24px; color:var(--text-muted);">履歴がありません。</div>`}
+    </div>
+  `;
+
+  let timerInterval=null, timerSeconds=0, timerRunning=false;
+  const display=document.getElementById("timer-display");
+  const toggleBtn=document.getElementById("timer-toggle");
+  function updateDisplay(){
+    const m=String(Math.floor(timerSeconds/60)).padStart(2,"0");
+    const sec=String(timerSeconds%60).padStart(2,"0");
+    if(display) display.textContent=`${m}:${sec}`;
+  }
+  updateDisplay();
+  toggleBtn.textContent = timerRunning ? "一時停止" : (timerSeconds>0?"再開":"開始");
+  toggleBtn.onclick = () => {
+    if(timerRunning){ timerRunning=false; clearInterval(timerInterval); toggleBtn.textContent="再開"; }
+    else { timerRunning=true; timerInterval=setInterval(()=>{timerSeconds++;updateDisplay();},1000); toggleBtn.textContent="一時停止"; }
+  };
+  document.getElementById("timer-reset").onclick = () => {
+    timerRunning=false; clearInterval(timerInterval); timerSeconds=0; updateDisplay(); toggleBtn.textContent="開始";
+  };
+  document.getElementById("timer-save").onclick = () => {
+    const min=Math.round(timerSeconds/60);
+    if(min>0){
+      addSession("タイマー学習",min);
+      timerSeconds=0; updateDisplay(); toggleBtn.textContent="開始";
+      timerRunning=false; clearInterval(timerInterval);
+      window.renderRecordPage();
+    } else { alert("1分以上計測してください。"); }
+  };
+};
+
+window.renderProfilePage = () => {
+  const user = getCurrentUser();
+  if (!user) {
+    app.innerHTML = `
+      <h1>プロフィール</h1>
+      <p class="page-desc">アカウントを登録すると、プロフィールを設定できます。</p>
+      <div style="display:flex; gap:16px;">
+        <button class="btn btn-primary" onclick="openRegister()">会員登録</button>
+        <button class="btn" onclick="openLogin()">ログイン</button>
+      </div>
+    `;
+    return;
+  }
+  const users = getUsers();
+  const u = users[user.email];
+  const bio = u?.bio || "";
+  const av = user.name ? user.name.charAt(0).toUpperCase() : "?";
+
+  app.innerHTML = `
+    <h1>プロフィール</h1>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:32px; max-width:560px; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+      <div class="profile-header">
+        <div class="profile-avatar">${av}</div>
+        <div>
+          <div style="font-size:24px; font-weight:700; margin-bottom:4px;">${esc(user.name)}</div>
+          <div class="muted" style="font-size:14px;">${esc(user.email)}</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ユーザー名</label>
+        <input type="text" id="pf-name" value="${esc(user.name)}">
+      </div>
+      <div class="form-group" style="margin-top:20px;">
+        <label>自己紹介</label>
+        <textarea id="pf-bio" rows="4" style="resize:vertical;">${esc(bio)}</textarea>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:32px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="window.saveProfile()">保存</button>
+        <button class="btn" style="flex:1;" onclick="window.doLogout()">ログアウト</button>
+      </div>
+    </div>
+  `;
+
+  window.saveProfile = () => {
+    const name = document.getElementById("pf-name").value.trim();
+    const bio = document.getElementById("pf-bio").value.trim();
+    if (!name) { alert("名前を入力してください"); return; }
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(name)) {
+      alert("ユーザー名は英数字とアンダーバー(_)のみ、3文字以上20文字以内で入力してください。");
+      return;
+    }
+    updateProfile(name, bio);
+    renderAuthButtons();
+    alert("プロフィールを更新しました。");
+    window.renderProfilePage();
+  };
+  window.doLogout = () => {
+    if (!confirm("ログアウトしますか？")) return;
+    logout(); renderAuthButtons(); renderSidebarFooter(); window.navigateTo("home");
+  };
+};
+
+window.openLogin = () => {
+  showModal(`
+    <h3 style="margin-bottom:24px; font-size:20px; font-weight:700;">ログイン</h3>
+    <div class="form-group" style="margin-bottom:20px;"><label>メールアドレス</label><input type="email" id="lg-email"></div>
+    <div class="form-group" style="margin-bottom:24px;"><label>パスワード</label><input type="password" id="lg-pass"></div>
+    <div style="display:flex; gap:12px; justify-content:flex-end;">
+      <button class="btn" onclick="window.closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="window.doLogin()">ログイン</button>
+    </div>
+  `);
+  window.doLogin = () => {
+    const email = document.getElementById("lg-email").value.trim();
+    const pass = document.getElementById("lg-pass").value;
+    if (!email || !pass) { alert("メールアドレスとパスワードを入力してください。"); return; }
+    const r = loginUser(email, pass);
+    if (!r.ok) { alert(r.msg); return; }
+    window.closeModal(); renderAuthButtons(); renderSidebarFooter(); window.navigateTo("home");
+  };
+};
+
+window.openRegister = () => {
+  showModal(`
+    <h3 style="margin-bottom:24px; font-size:20px; font-weight:700;">会員登録</h3>
+    <div class="form-group" style="margin-bottom:20px;"><label>ユーザー名</label><input type="text" id="rg-name"></div>
+    <div class="form-group" style="margin-bottom:20px;"><label>メールアドレス</label><input type="email" id="rg-email"></div>
+    <div class="form-group" style="margin-bottom:20px;"><label>パスワード</label><input type="password" id="rg-pass"></div>
+    <div class="form-group" style="margin-bottom:24px;"><label>パスワード（確認）</label><input type="password" id="rg-pass-confirm"></div>
+    <div style="display:flex; gap:12px; justify-content:flex-end;">
+      <button class="btn" onclick="window.closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="window.doRegister()">登録</button>
+    </div>
+  `);
+  window.doRegister = () => {
+    const name = document.getElementById("rg-name").value.trim();
+    const email = document.getElementById("rg-email").value.trim();
+    const pass = document.getElementById("rg-pass").value;
+    const passConfirm = document.getElementById("rg-pass-confirm").value;
+    if (!name || !email || !pass || !passConfirm) { alert("全ての項目を入力してください。"); return; }
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(name)) { alert("ユーザー名は英数字とアンダーバー(_)のみ、3文字以上20文字以内で入力してください。"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert("メールアドレスの形式が正しくありません。"); return; }
+    if (pass.length < 6) { alert("パスワードは6文字以上にしてください。"); return; }
+    if (pass !== passConfirm) { alert("パスワードが一致しません。"); return; }
+    const r = registerUser(email, pass, name);
+    if (!r.ok) { alert(r.msg); return; }
+    window.closeModal(); renderAuthButtons(); renderSidebarFooter(); window.navigateTo("home");
+  };
+};
+
+function showModal(innerHtml) {
+  let overlay = document.getElementById("modal-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.id = "modal-overlay";
+    overlay.innerHTML = `<div class="modal-content" id="modal-content" style="background:var(--surface); padding:32px; border-radius:16px; width:100%; max-width:480px; box-shadow:0 24px 48px rgba(0,0,0,0.2);"></div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", e => { if (e.target === overlay) window.closeModal(); });
+  }
+  document.getElementById("modal-content").innerHTML = innerHtml;
+  overlay.classList.add("open");
+}
+window.closeModal = () => {
+  const overlay = document.getElementById("modal-overlay");
+  if (overlay) overlay.classList.remove("open");
+};
+
+renderAuthButtons();
+renderSidebarFooter();
+window.navigateTo("home");
