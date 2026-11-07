@@ -1,115 +1,7 @@
-const KEYS = {
-  THEME:"sf.theme", PROGRESS:"sf.progress", SESSIONS:"sf.sessions", USER:"sf.user", USERS:"sf.users",
-  LAST:"sf.last", TODOS:"sf.todos"
-};
-function load(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
-function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
-function todayStr() { return new Date().toISOString().slice(0,10); }
-function fmtMin(m) { if (m<60) return m+"分"; const h=Math.floor(m/60), r=m%60; return r?`${h}時間${r}分`:`${h}時間`; }
-function esc(s) { return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-
-function initTheme() {
-  const saved = load(KEYS.THEME, null);
-  const t = saved || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
-  document.documentElement.setAttribute("data-theme", t);
-}
-initTheme();
-document.getElementById("theme-btn").onclick = () => {
-  const cur = document.documentElement.getAttribute("data-theme");
-  const next = cur === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", next);
-  save(KEYS.THEME, next);
-};
-
-/* アカウント */
-function getCurrentUser() { return load(KEYS.USER, null); }
-function setCurrentUser(u) { save(KEYS.USER, u); }
-function getUsers() { return load(KEYS.USERS, {}); }
-function registerUser(email, password, name) {
-  const users = getUsers();
-  if (users[email]) return { ok:false, msg:"このメールアドレスは既に登録されています。" };
-  users[email] = { email, password, name, bio:"", createdAt:Date.now() };
-  save(KEYS.USERS, users);
-  setCurrentUser({ email, name });
-  return { ok:true };
-}
-function loginUser(email, password) {
-  const users = getUsers();
-  if (!users[email] || users[email].password !== password) return { ok:false, msg:"メールアドレスまたはパスワードが違います。" };
-  setCurrentUser({ email, name:users[email].name });
-  return { ok:true };
-}
-function logout() { localStorage.removeItem(KEYS.USER); }
-function updateProfile(name, bio) {
-  const cur = getCurrentUser(); if (!cur) return;
-  const users = getUsers();
-  if (users[cur.email]) { users[cur.email].name = name; users[cur.email].bio = bio; save(KEYS.USERS, users); }
-  setCurrentUser({ ...cur, name });
-}
-
-/* 挨拶（時間帯＋名前） */
-function greetingBase() {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 11) return "おはようございます。";
-  if (hour >= 11 && hour < 18) return "こんにちは。";
-  return "こんばんは。今日も一日お疲れ様です。";
-}
-function greetingWithName() {
-  const user = getCurrentUser();
-  const base = greetingBase();
-  if (!user) return base;
-  return `${user.name}さん、${base}`;
-}
-
-/* 連続学習日数から称号 */
-function rankFromStreak(days) {
-  if (days >= 100) return "👑 100日達成";
-  if (days >= 30) return "💎 30日連続";
-  if (days >= 14) return "🌟 14日連続";
-  if (days >= 7) return "🔥 7日連続";
-  if (days >= 3) return "🔥 3日連続";
-  if (days >= 1) return "✨ 学習スタート";
-  return "🌱 はじめの一歩";
-}
-
-/* 学習記録 */
-function getProgress() { return load(KEYS.PROGRESS, {}); }
-function setProgress(id, correct, total) {
-  const p = getProgress();
-  p[id] = { correct, total, ratio: total?correct/total:0, date:todayStr() };
-  save(KEYS.PROGRESS, p);
-}
-function getSessions() { return load(KEYS.SESSIONS, []); }
-function addSession(label, minutes) {
-  if (minutes<=0) return;
-  const arr = getSessions();
-  arr.push({ date:todayStr(), label, minutes, ts:Date.now() });
-  save(KEYS.SESSIONS, arr);
-}
-function totalMinutes() { return getSessions().reduce((a,b)=>a+b.minutes,0); }
-function todayMinutes() { return getSessions().filter(s=>s.date===todayStr()).reduce((a,b)=>a+b.minutes,0); }
-function monthMinutes() { const m=todayStr().slice(0,7); return getSessions().filter(s=>s.date.slice(0,7)===m).reduce((a,b)=>a+b.minutes,0); }
-function streak() {
-  const dates = new Set(getSessions().map(s=>s.date));
-  let count = 0; const d = new Date();
-  while (true) {
-    const ds = d.toISOString().slice(0,10);
-    if (dates.has(ds)) { count++; d.setDate(d.getDate()-1); } else break;
-  }
-  return count;
-}
-
-/* 前回の続き */
-function getLastStudy() { return load(KEYS.LAST, null); }
-function setLastStudy(obj) { save(KEYS.LAST, obj); }
-
-/* ToDo */
-function getTodos() { return load(KEYS.TODOS, []); }
-function saveTodos(arr) { save(KEYS.TODOS, arr); }
-
 /* =========================================================================
-   3. 画面描画
+   app.js - 画面描画・ロジック
    ========================================================================= */
+
 const app = document.getElementById("app");
 const pageTitle = document.getElementById("page-title");
 
@@ -162,7 +54,9 @@ window.navigateTo = (pageId) => {
   }
 };
 
-/* 達成率計算（全単元数・達成単元数） */
+/* =========================================================================
+   共通ロジック
+   ========================================================================= */
 function allUnitCount() {
   return Object.values(CURRICULUM).reduce((a,stage)=>
     a+Object.values(stage).reduce((b,sub)=>
@@ -172,8 +66,6 @@ function doneUnitCount() {
   const p = getProgress();
   return Object.values(p).filter(r=>r.ratio>=0.8).length;
 }
-
-/* 円形プログレス */
 function ringSvg(percent, size=64, stroke=6) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -188,7 +80,9 @@ function ringSvg(percent, size=64, stroke=6) {
   `;
 }
 
-/* ホーム */
+/* =========================================================================
+   ① ホーム画面
+   ========================================================================= */
 window.renderHomePage = () => {
   const tMin = todayMinutes();
   const s = streak();
@@ -217,29 +111,29 @@ window.renderHomePage = () => {
       </div>
     </div>
 
-    <div style="margin-top:40px;">
+    <div class="home-actions">
       <button class="btn btn-primary" onclick="window.navigateTo('learn')">学習をはじめる</button>
-    </div>
-
-    <div class="resume-card">
-      <div class="resume-left">
-        <div class="resume-label">前回の続き</div>
+      
+      <div class="resume-card resume-card-inline">
+        <div class="resume-left">
+          <div class="resume-label">前回の続き</div>
+          ${last
+            ? `<div class="resume-title">${esc(last.unit)}</div>
+               <div class="resume-meta">${esc(last.subject||"")}${last.rate!=null?` ・ 前回 ${last.rate}%`:""}</div>`
+            : `<div class="resume-title muted">まだ学習履歴がありません</div>
+               <div class="resume-meta">「学習をはじめる」から最初の単元を選びましょう</div>`}
+        </div>
         ${last
-          ? `<div class="resume-title">${esc(last.unit)}</div>
-             <div class="resume-meta">${esc(last.subject||"")}${last.rate!=null?` ・ 前回 ${last.rate}%`:""}</div>`
-          : `<div class="resume-title muted">まだ学習履歴がありません</div>
-             <div class="resume-meta">「学習をはじめる」から最初の単元を選びましょう</div>`}
+          ? `<button class="btn btn-primary resume-btn" onclick="window.renderQuizPage('${esc(last.unit)}','${esc(last.subject||"")}')">再開する</button>`
+          : `<button class="btn resume-btn" onclick="window.navigateTo('learn')">単元を選ぶ</button>`}
       </div>
-      ${last
-        ? `<button class="btn btn-primary resume-btn" onclick="window.renderQuizPage('${esc(last.unit)}','${esc(last.subject||"")}')">再開する</button>`
-        : `<button class="btn resume-btn" onclick="window.navigateTo('learn')">単元を選ぶ</button>`}
     </div>
 
     <div class="todo-section">
-      <h2>今日やること</h2>
+      <h2>今日やることリスト</h2>
       <div class="todo-card">
         <div class="todo-input-row">
-          <input class="todo-input" id="todo-input" placeholder="例：宿題のプリントをやる / 明日のテスト勉強">
+          <input class="todo-input" id="todo-input">
           <button class="todo-add" onclick="window.addTodo()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
             追加
@@ -261,7 +155,7 @@ window.renderTodos = () => {
   if (!list) return;
   const todos = getTodos();
   if (!todos.length) {
-    list.innerHTML = `<li class="todo-empty">今日やることを追加してみましょう。</li>`;
+    list.innerHTML = "";
     return;
   }
   list.innerHTML = todos.map((t, i) => `
@@ -295,7 +189,9 @@ window.deleteTodo = (i) => {
   window.renderTodos();
 };
 
-/* 学習トップ */
+/* =========================================================================
+   学習トップ・単元ページ
+   ========================================================================= */
 window.renderLearnIndex = () => {
   let html = `<div class="eboard-header">教科の一覧</div><div class="eboard-columns">`;
   for (const [stage, subjects] of Object.entries(CURRICULUM)) {
@@ -324,7 +220,6 @@ window.renderLearnIndex = () => {
   app.innerHTML = html;
 };
 
-/* 教科ページ */
 window.renderSubjectPage = (stage, subject) => {
   pageTitle.textContent = subject;
   const subjectData = CURRICULUM[stage][subject];
@@ -372,7 +267,7 @@ window.drawUnits = (stage, subject, grade) => {
     const done = rate != null && rate >= 80;
     return `
       <li>
-        <div class="unit-item" onclick="window.renderQuizPage('${esc(u)}','${esc(subject)}')">
+        <div class="unit-item" onclick="window.renderQuizPage('${esc(u)}','${esc(subject)}', '${stage}', '${grade}')">
           <div class="unit-icon ${done?'done':''}">${done?'✓':i+1}</div>
           <div class="unit-text">${esc(u)}</div>
           <div class="unit-rate">${rate!=null?`${rate}%`:"—"}</div>
@@ -382,14 +277,32 @@ window.drawUnits = (stage, subject, grade) => {
   }).join("");
 };
 
-/* クイズ */
-window.renderQuizPage = (unitTitle, subject) => {
+/* =========================================================================
+   クイズ画面 (⑤,⑥,⑧,⑨ 対応)
+   ========================================================================= */
+window.renderQuizPage = (unitTitle, subject, stage, grade) => {
   pageTitle.textContent = unitTitle;
   const questions = generateQuestions(unitTitle);
+  
+  // ⑥ 次の単元の取得
+  let nextUnitTitle = null;
+  let nextUnitSubject = subject;
+  if (stage && grade && subject) {
+    const units = CURRICULUM[stage][subject][grade];
+    const idx = units.indexOf(unitTitle);
+    if (idx !== -1 && idx < units.length - 1) {
+      nextUnitTitle = units[idx + 1];
+    }
+  }
+
   let currentQ = 0;
   let selected = null;
   let answers = [];
   let startTime = Date.now();
+  
+  // ⑧ 効果音用
+  const soundCorrect = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+  const soundWrong = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
 
   function draw() {
     if (currentQ >= questions.length) {
@@ -406,9 +319,12 @@ window.renderQuizPage = (unitTitle, subject) => {
             <h1 style="font-size:40px; margin-bottom:16px;">${correct} <span style="font-size:24px;color:var(--text-muted)">/ ${total}</span></h1>
             <p style="font-size:18px; font-weight:600; color:var(--text-muted); margin-bottom:48px;">正答率: ${rate}%</p>
             <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
-              <button class="btn btn-primary" onclick="window.navigateTo('learn')">次の単元へ</button>
-              <button class="btn" onclick="window.renderQuizPage('${esc(unitTitle)}','${esc(subject||"")}')">もう一度</button>
-              <button class="btn" onclick="window.navigateTo('home')">ホームへ</button>
+              ${nextUnitTitle 
+                ? `<button class="btn btn-primary" onclick="window.renderQuizPage('${esc(nextUnitTitle)}','${esc(subject)}', '${esc(stage)}', '${esc(grade)}')">次の単元へ</button>`
+                : `<button class="btn btn-primary" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">単元一覧へ</button>`
+              }
+              <button class="btn" onclick="window.renderQuizPage('${esc(unitTitle)}','${esc(subject)}', '${esc(stage)}', '${esc(grade)}')">もう一度</button>
+              <button class="btn" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">元に戻る</button>
             </div>
           </div>
         </div>
@@ -424,11 +340,11 @@ window.renderQuizPage = (unitTitle, subject) => {
     app.innerHTML = `
       <div class="quiz-wrapper">
         <div class="unit-header">
-          <span onclick="window.navigateTo('learn')">教科一覧</span> &nbsp;/&nbsp; ${esc(unitTitle)}
+          <span onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">元に戻る</span> &nbsp;/&nbsp; ${esc(unitTitle)}
         </div>
         <div class="quiz-container">
           <div class="quiz-header">
-            <button class="quiz-close" onclick="window.navigateTo('learn')">×</button>
+            <button class="quiz-close" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">×</button>
             <div class="quiz-title">${esc(unitTitle)}</div>
             <div style="width:24px;"></div>
           </div>
@@ -451,8 +367,22 @@ window.renderQuizPage = (unitTitle, subject) => {
                 if (i === q.a) cls += " correct";
                 else if (i === selected) cls += " wrong";
               }
-              return `<button class="${cls}" onclick="window._sel(${i})" ${selected!==null?"disabled":""}>${esc(opt)}</button>`;
+              // ⑤ 括弧や記号を一切使わない
+              const cleanOpt = String(opt).replace(/[()（）「」『』、,\.\s]/g, '');
+              return `<button class="${cls}" onclick="window._sel(${i})" ${selected!==null?"disabled":""}>${esc(cleanOpt)}</button>`;
             }).join("")}
+          </div>
+          
+          <div class="quiz-feedback-area ${selected!==null?'show':''}" id="feedback-area">
+            ${selected !== null ? `
+              <div class="feedback-text ${selected === q.a ? 'correct' : 'wrong'}">
+                ${selected === q.a ? '正解！' : '不正解...'} 
+                ${q.exp ? `<br><span style="color:var(--text-muted); font-weight:400; font-size:14px;">${esc(q.exp)}</span>` : ''}
+              </div>
+              <div class="feedback-actions">
+                <button class="btn btn-primary" onclick="window._nextQ()">次へ</button>
+              </div>
+            ` : ''}
           </div>
         </div>
       </div>
@@ -462,9 +392,34 @@ window.renderQuizPage = (unitTitle, subject) => {
       if (selected !== null) return;
       selected = i;
       answers[currentQ] = (i === q.a);
-      draw();
-      setTimeout(() => { currentQ++; selected = null; draw(); }, 800);
+      
+      // ⑧ 効果音（Web Audio APIを使用してシンプルな音を生成）
+      try {
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        if (i === q.a) {
+          osc.frequency.value = 880; // ピーン（正解）
+        } else {
+          osc.frequency.value = 220; // ブー（不正解）
+        }
+        gain.gain.setValueAtTime(0.1, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.3);
+        osc.start();
+        osc.stop(actx.currentTime + 0.3);
+      } catch(e) {}
+      
+      draw(); // ボタンの色を変えるため再描画
     };
+    
+    window._nextQ = () => {
+      currentQ++;
+      selected = null;
+      draw();
+    };
+
     window._openMemo = () => {
       const overlay = document.createElement("div");
       overlay.className = "modal-overlay open";
@@ -509,9 +464,12 @@ window.renderQuizPage = (unitTitle, subject) => {
   draw();
 };
 
-/* メモ */
+/* =========================================================================
+   メモ（手書きキャンバス）機能 (④ 消しゴム修正)
+   ========================================================================= */
 let canvas, ctx, isDrawing = false, currentTool = 'pen';
 let strokes = [], currentStroke = [], redoStack = [];
+
 window._initCanvas = () => {
   canvas = document.getElementById("memo-canvas");
   ctx = canvas.getContext("2d");
@@ -526,40 +484,71 @@ window._initCanvas = () => {
   canvas.addEventListener("touchmove", (e)=>{e.preventDefault();draw(e.touches[0]);},{passive:false});
   canvas.addEventListener("touchend", stopDrawing);
 };
+
 function getPos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+
 function startDrawing(e){
   isDrawing=true; const pos=getPos(e);
   currentStroke=[{x:pos.x,y:pos.y,tool:currentTool}];
   ctx.beginPath(); ctx.moveTo(pos.x,pos.y);
-  if(currentTool==='eraser'){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(); ctx.lineWidth=24; }
-  else { ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--text').trim(); ctx.lineWidth=3; }
+  // ④ 消しゴムの色を背景色にする
+  if(currentTool==='eraser'){ 
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth=24; 
+  }
+  else { 
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--text').trim(); 
+    ctx.lineWidth=3; 
+  }
   redoStack=[];
 }
+
 function draw(e){
   if(!isDrawing) return;
   const pos=getPos(e); currentStroke.push({x:pos.x,y:pos.y,tool:currentTool});
   ctx.lineTo(pos.x,pos.y); ctx.stroke();
 }
-function stopDrawing(){ if(!isDrawing) return; isDrawing=false; ctx.closePath(); strokes.push(currentStroke); currentStroke=[]; }
+
+function stopDrawing(){ 
+  if(!isDrawing) return; 
+  isDrawing=false; 
+  ctx.closePath(); 
+  strokes.push(currentStroke); 
+  currentStroke=[]; 
+}
+
 window._setTool = (tool) => {
   currentTool = tool;
   document.getElementById("tool-pen").classList.toggle("active", tool==='pen');
   document.getElementById("tool-eraser").classList.toggle("active", tool==='eraser');
 };
+
 window._clearMemo = () => { ctx.clearRect(0,0,canvas.width,canvas.height); strokes=[]; redoStack=[]; };
 window._memoUndo = () => { if(!strokes.length) return; redoStack.push(strokes.pop()); redrawCanvas(); };
 window._memoRedo = () => { if(!redoStack.length) return; strokes.push(redoStack.pop()); redrawCanvas(); };
+
 function redrawCanvas(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   strokes.forEach(stroke=>{
     ctx.beginPath(); ctx.moveTo(stroke[0].x,stroke[0].y);
-    if(stroke[0].tool==='eraser'){ ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(); ctx.lineWidth=24; }
-    else { ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--text').trim(); ctx.lineWidth=3; }
+    if(stroke[0].tool==='eraser'){ 
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth=24; 
+    }
+    else { 
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--text').trim(); 
+      ctx.lineWidth=3; 
+    }
     stroke.forEach(p=>ctx.lineTo(p.x,p.y)); ctx.stroke();
   });
+  ctx.globalCompositeOperation = 'source-over'; // 元に戻す
 }
 
-/* 記録 */
+/* =========================================================================
+   ③ 記録画面（グラフ色分け）
+   ========================================================================= */
 window.renderRecordPage = () => {
   const sessions = getSessions();
   const tMin = todayMinutes();
@@ -567,16 +556,34 @@ window.renderRecordPage = () => {
   const s = streak();
   const total = totalMinutes();
 
+  // ③ 科目ごとの色を判定する関数
+  function getSubjectColor(label) {
+    if (label.includes("算数") || label.includes("数学")) return "var(--accent)"; // 青
+    if (label.includes("理科")) return "var(--green)"; // 緑
+    if (label.includes("社会")) return "var(--yellow)"; // 黄
+    if (label.includes("国語") || label.includes("漢字")) return "var(--red)"; // 赤
+    if (label.includes("英語")) return "#fd7e14"; // オレンジ
+    return "var(--text-muted)";
+  }
+
   const week = [];
   for (let i=6;i>=0;i--) {
     const d = new Date(Date.now()-i*86400000).toISOString().slice(0,10);
-    const m = sessions.filter(x=>x.date===d).reduce((a,b)=>a+b.minutes,0);
+    const daySessions = sessions.filter(x=>x.date===d);
+    const m = daySessions.reduce((a,b)=>a+b.minutes,0);
     const dayNames = ["日","月","火","水","木","金","土"];
     const dow = dayNames[new Date(d).getDay()];
-    week.push({ date:d, min:m, dow });
+    
+    // その日のセッションを科目ごとに集計
+    const subjectMinutes = {};
+    daySessions.forEach(ses => {
+      const color = getSubjectColor(ses.label);
+      subjectMinutes[color] = (subjectMinutes[color] || 0) + ses.minutes;
+    });
+
+    week.push({ date:d, min:m, dow, subjectMinutes });
   }
 
-  // 最近の履歴（日付・教科・単元・正答率）
   const p = getProgress();
   const history = Object.entries(p)
     .sort((a,b)=> (b[1].date||"").localeCompare(a[1].date||""))
@@ -600,7 +607,15 @@ window.renderRecordPage = () => {
       <div class="chart-area">
         <div class="chart-grid">${[0,1,2,3,4].map(()=>`<div class="chart-line"></div>`).join("")}</div>
         <div class="chart-bars">
-          ${week.map(w=>`<div class="chart-bar" title="${fmtMin(w.min)}"><div class="chart-fill" style="height:${(w.min/(4*60))*100}%"></div></div>`).join("")}
+          ${week.map(w => `
+            <div class="chart-bar" title="${fmtMin(w.min)}">
+              <div style="width:100%; display:flex; flex-direction:column-reverse; height:${(w.min/(4*60))*100}%;">
+                ${Object.entries(w.subjectMinutes).map(([color, min]) => `
+                  <div style="background:${color}; height:${(min/w.min)*100}%; width:100%;"></div>
+                `).join("")}
+              </div>
+            </div>
+          `).join("")}
         </div>
       </div>
     </div>
@@ -660,7 +675,9 @@ window.renderRecordPage = () => {
   };
 };
 
-/* プロフィール */
+/* =========================================================================
+   プロフィール・認証（変更なし）
+   ========================================================================= */
 window.renderProfilePage = () => {
   const user = getCurrentUser();
   if (!user) {
@@ -723,7 +740,6 @@ window.renderProfilePage = () => {
   };
 };
 
-/* 認証モーダル */
 window.openLogin = () => {
   showModal(`
     <h3 style="margin-bottom:24px; font-size:20px; font-weight:700;">ログイン</h3>
