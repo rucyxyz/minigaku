@@ -380,13 +380,12 @@ window.drawUnits = (stage, subject, grade) => {
 };
 
 /* =========================================================================
-   5. クイズ画面
+   5. クイズ画面（①,③,④,⑤,⑦,⑧ 対応）
    ========================================================================= */
 window.renderQuizPage = (unitTitle, subject, stage, grade) => {
   pageTitle.textContent = unitTitle;
-  const questions = generateQuestions(unitTitle);
+  const questions = generateQuestions(unitTitle, subject);
   
-  // 次の単元の取得
   let nextUnitTitle = null;
   if (stage && grade && subject) {
     const units = CURRICULUM[stage][subject][grade];
@@ -411,17 +410,17 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       setLastStudy({ unit: unitTitle, subject: subject || "", rate });
 
       app.innerHTML = `
-        <div style="max-width:640px; margin:0 auto;">
+        <div class="quiz-result-wrapper">
           <div style="text-align:center; padding:48px 0; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 4px 20px rgba(0,0,0,0.05);">
-            <h1 style="font-size:40px; margin-bottom:16px;">${correct} <span style="font-size:24px;color:var(--text-muted)">/ ${total}</span></h1>
-            <p style="font-size:18px; font-weight:600; color:var(--text-muted); margin-bottom:48px;">正答率: ${rate}%</p>
+            <h1 style="font-size:56px; margin-bottom:16px;">${correct} <span style="font-size:28px;color:var(--text-muted)">/ ${total}</span></h1>
+            <p style="font-size:20px; font-weight:600; color:var(--text-muted); margin-bottom:48px;">正答率: ${rate}%</p>
             <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
               ${nextUnitTitle 
-                ? `<button class="btn btn-primary" onclick="window.renderQuizPage('${esc(nextUnitTitle)}','${esc(subject)}', '${esc(stage)}', '${esc(grade)}')">次の単元へ</button>`
-                : `<button class="btn btn-primary" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">単元一覧へ</button>`
+                ? `<button class="btn btn-primary" style="padding:16px 32px; font-size:18px;" onclick="window.renderQuizPage('${esc(nextUnitTitle)}','${esc(subject)}', '${esc(stage)}', '${esc(grade)}')">次の単元へ</button>`
+                : `<button class="btn btn-primary" style="padding:16px 32px; font-size:18px;" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">単元一覧へ</button>`
               }
-              <button class="btn" onclick="window.renderQuizPage('${esc(unitTitle)}','${esc(subject)}', '${esc(stage)}', '${esc(grade)}')">もう一度</button>
-              <button class="btn" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">元に戻る</button>
+              <button class="btn" style="padding:16px 32px; font-size:18px;" onclick="window.renderQuizPage('${esc(unitTitle)}','${esc(subject)}', '${esc(stage)}', '${esc(grade)}')">もう一度</button>
+              <button class="btn" style="padding:16px 32px; font-size:18px;" onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">元に戻る</button>
             </div>
           </div>
         </div>
@@ -434,8 +433,11 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
     const correctCount = answers.filter(a => a === true).length;
     const accuracy = answers.length > 0 ? Math.round((correctCount/answers.length)*100) : 0;
 
+    // ⑦ 問題文の記号を除外
+    const cleanQ = String(q.q).replace(/[「」『』()（）]/g, '');
+
     app.innerHTML = `
-      <div class="quiz-wrapper">
+      <div class="quiz-wrapper" style="max-width:1000px;">
         <div class="unit-header">
           <span onclick="window.renderSubjectPage('${esc(stage)}','${esc(subject)}')">元に戻る</span> &nbsp;/&nbsp; ${esc(unitTitle)}
         </div>
@@ -451,7 +453,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
             <div class="quiz-stat">正答率:${accuracy}%</div>
           </div>
           <div class="quiz-question-area">
-            <div class="quiz-q-text">${esc(q.q)}</div>
+            <div class="quiz-q-text">${esc(cleanQ)}</div>
             <button class="memo-btn" onclick="window._openMemo()">
               <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
               <span>Memo</span>
@@ -464,7 +466,8 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
                 if (i === q.a) cls += " correct";
                 else if (i === selected) cls += " wrong";
               }
-              const cleanOpt = String(opt).replace(/[()（）「」『』、,\.\s]/g, '');
+              // ⑦ 選択肢の記号を除外
+              const cleanOpt = String(opt).replace(/[「」『』()（）、,\.\s]/g, '');
               return `<button class="${cls}" onclick="window._sel(${i})" ${selected!==null?"disabled":""}>${esc(cleanOpt)}</button>`;
             }).join("")}
           </div>
@@ -473,10 +476,12 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
             ${selected !== null ? `
               <div class="feedback-text ${selected === q.a ? 'correct' : 'wrong'}">
                 ${selected === q.a ? '正解！' : '不正解...'} 
-                ${q.exp ? `<br><span style="color:var(--text-muted); font-weight:400; font-size:14px;">${esc(q.exp)}</span>` : ''}
+                <br><span style="color:var(--text-muted); font-weight:400; font-size:15px; display:block; margin-top:8px;">
+                  解説: ${esc(q.exp || "この問題の詳しい解説はありません。")}
+                </span>
               </div>
               <div class="feedback-actions">
-                <button class="btn btn-primary" onclick="window._nextQ()">次へ</button>
+                <button class="btn btn-primary" style="padding:12px 32px;" onclick="window._nextQ()">次へ</button>
               </div>
             ` : ''}
           </div>
@@ -489,6 +494,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       selected = i;
       answers[currentQ] = (i === q.a);
       
+      // ① 音量アップ (gain 0.5)
       try {
         const actx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = actx.createOscillator();
@@ -496,8 +502,8 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
         osc.connect(gain);
         gain.connect(actx.destination);
         if (i === q.a) osc.frequency.value = 880;
-        else osc.frequency.value = 220;
-        gain.gain.setValueAtTime(0.1, actx.currentTime);
+        else osc.frequency.value = 300; // 不正解の音を少し高くして聞こえやすく
+        gain.gain.setValueAtTime(0.5, actx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.3);
         osc.start();
         osc.stop(actx.currentTime + 0.3);
@@ -517,8 +523,8 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       overlay.className = "modal-overlay open";
       overlay.id = "memo-modal";
       overlay.innerHTML = `
-        <div class="memo-modal">
-          <div class="memo-header">
+        <div class="memo-modal" id="memo-window">
+          <div class="memo-header" id="memo-drag-handle">
             <div class="memo-title">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
               メモ
@@ -547,6 +553,31 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       `;
       document.body.appendChild(overlay);
       window._initCanvas();
+      
+      // ⑧ ドラッグ移動処理
+      const modal = document.getElementById("memo-window");
+      const handle = document.getElementById("memo-drag-handle");
+      let isDragging = false, startX, startY, startLeft, startTop;
+      modal.style.left = '50%'; modal.style.top = '50%'; modal.style.transform = 'translate(-50%, -50%)';
+
+      handle.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        const rect = modal.getBoundingClientRect();
+        startX = e.clientX; startY = e.clientY;
+        startLeft = rect.left; startTop = rect.top;
+        modal.style.left = startLeft + 'px'; modal.style.top = startTop + 'px';
+        modal.style.transform = 'none';
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        modal.style.left = (startLeft + e.clientX - startX) + 'px';
+        modal.style.top = (startTop + e.clientY - startY) + 'px';
+      });
+      document.addEventListener("mouseup", () => {
+        isDragging = false;
+        document.body.style.userSelect = '';
+      });
     };
     window._closeMemo = () => {
       const modal = document.getElementById("memo-modal");
@@ -638,7 +669,7 @@ function redrawCanvas(){
 }
 
 /* =========================================================================
-   7. 記録画面
+   7. 記録画面（⑥ 色分け確実化）
    ========================================================================= */
 window.renderRecordPage = () => {
   const sessions = getSessions();
@@ -666,6 +697,7 @@ window.renderRecordPage = () => {
     
     const subjectMinutes = {};
     daySessions.forEach(ses => {
+      // 教科名（ラベル）を元に色を決定
       const color = getSubjectColor(ses.label);
       subjectMinutes[color] = (subjectMinutes[color] || 0) + ses.minutes;
     });
