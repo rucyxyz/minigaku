@@ -1,7 +1,112 @@
 /* =========================================================================
-   app.js - 画面描画・ロジック
+   1. ストレージ・アカウント・学習記録関連
    ========================================================================= */
+const KEYS = {
+  THEME:"sf.theme", PROGRESS:"sf.progress", SESSIONS:"sf.sessions", USER:"sf.user", USERS:"sf.users",
+  LAST:"sf.last", TODOS:"sf.todos"
+};
 
+function load(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
+function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function fmtMin(m) { if (m<60) return m+"分"; const h=Math.floor(m/60), r=m%60; return r?`${h}時間${r}分`:`${h}時間`; }
+function esc(s) { return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function initTheme() {
+  const saved = load(KEYS.THEME, null);
+  const t = saved || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  document.documentElement.setAttribute("data-theme", t);
+}
+initTheme();
+document.getElementById("theme-btn").onclick = () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  save(KEYS.THEME, next);
+};
+
+function getCurrentUser() { return load(KEYS.USER, null); }
+function setCurrentUser(u) { save(KEYS.USER, u); }
+function getUsers() { return load(KEYS.USERS, {}); }
+function registerUser(email, password, name) {
+  const users = getUsers();
+  if (users[email]) return { ok:false, msg:"このメールアドレスは既に登録されています。" };
+  users[email] = { email, password, name, bio:"", createdAt:Date.now() };
+  save(KEYS.USERS, users);
+  setCurrentUser({ email, name });
+  return { ok:true };
+}
+function loginUser(email, password) {
+  const users = getUsers();
+  if (!users[email] || users[email].password !== password) return { ok:false, msg:"メールアドレスまたはパスワードが違います。" };
+  setCurrentUser({ email, name:users[email].name });
+  return { ok:true };
+}
+function logout() { localStorage.removeItem(KEYS.USER); }
+function updateProfile(name, bio) {
+  const cur = getCurrentUser(); if (!cur) return;
+  const users = getUsers();
+  if (users[cur.email]) { users[cur.email].name = name; users[cur.email].bio = bio; save(KEYS.USERS, users); }
+  setCurrentUser({ ...cur, name });
+}
+
+function greetingBase() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return "おはようございます。";
+  if (hour >= 11 && hour < 18) return "こんにちは。";
+  return "こんばんは。今日も一日お疲れ様です。";
+}
+function greetingWithName() {
+  const user = getCurrentUser();
+  const base = greetingBase();
+  if (!user) return base;
+  return `${user.name}さん、${base}`;
+}
+function rankFromStreak(days) {
+  if (days >= 100) return "👑 100日達成";
+  if (days >= 30) return "💎 30日連続";
+  if (days >= 14) return "🌟 14日連続";
+  if (days >= 7) return "🔥 7日連続";
+  if (days >= 3) return "🔥 3日連続";
+  if (days >= 1) return "✨ 学習スタート";
+  return "🌱 はじめの一歩";
+}
+
+function getProgress() { return load(KEYS.PROGRESS, {}); }
+function setProgress(id, correct, total) {
+  const p = getProgress();
+  p[id] = { correct, total, ratio: total?correct/total:0, date:todayStr() };
+  save(KEYS.PROGRESS, p);
+}
+function getSessions() { return load(KEYS.SESSIONS, []); }
+function addSession(label, minutes) {
+  if (minutes<=0) return;
+  const arr = getSessions();
+  arr.push({ date:todayStr(), label, minutes, ts:Date.now() });
+  save(KEYS.SESSIONS, arr);
+}
+function totalMinutes() { return getSessions().reduce((a,b)=>a+b.minutes,0); }
+function todayMinutes() { return getSessions().filter(s=>s.date===todayStr()).reduce((a,b)=>a+b.minutes,0); }
+function monthMinutes() { const m=todayStr().slice(0,7); return getSessions().filter(s=>s.date.slice(0,7)===m).reduce((a,b)=>a+b.minutes,0); }
+function streak() {
+  const dates = new Set(getSessions().map(s=>s.date));
+  let count = 0; const d = new Date();
+  while (true) {
+    const ds = d.toISOString().slice(0,10);
+    if (dates.has(ds)) { count++; d.setDate(d.getDate()-1); } else break;
+  }
+  return count;
+}
+
+function getLastStudy() { return load(KEYS.LAST, null); }
+function setLastStudy(obj) { save(KEYS.LAST, obj); }
+
+function getTodos() { return load(KEYS.TODOS, []); }
+function saveTodos(arr) { save(KEYS.TODOS, arr); }
+
+/* =========================================================================
+   2. 画面描画・基本ロジック
+   ========================================================================= */
 const app = document.getElementById("app");
 const pageTitle = document.getElementById("page-title");
 
@@ -54,9 +159,6 @@ window.navigateTo = (pageId) => {
   }
 };
 
-/* =========================================================================
-   共通ロジック
-   ========================================================================= */
 function allUnitCount() {
   return Object.values(CURRICULUM).reduce((a,stage)=>
     a+Object.values(stage).reduce((b,sub)=>
@@ -81,7 +183,7 @@ function ringSvg(percent, size=64, stroke=6) {
 }
 
 /* =========================================================================
-   ① ホーム画面
+   3. ホーム画面
    ========================================================================= */
 window.renderHomePage = () => {
   const tMin = todayMinutes();
@@ -190,7 +292,7 @@ window.deleteTodo = (i) => {
 };
 
 /* =========================================================================
-   学習トップ・単元ページ
+   4. 学習トップ・単元ページ
    ========================================================================= */
 window.renderLearnIndex = () => {
   let html = `<div class="eboard-header">教科の一覧</div><div class="eboard-columns">`;
@@ -278,15 +380,14 @@ window.drawUnits = (stage, subject, grade) => {
 };
 
 /* =========================================================================
-   クイズ画面 (⑤,⑥,⑧,⑨ 対応)
+   5. クイズ画面
    ========================================================================= */
 window.renderQuizPage = (unitTitle, subject, stage, grade) => {
   pageTitle.textContent = unitTitle;
   const questions = generateQuestions(unitTitle);
   
-  // ⑥ 次の単元の取得
+  // 次の単元の取得
   let nextUnitTitle = null;
-  let nextUnitSubject = subject;
   if (stage && grade && subject) {
     const units = CURRICULUM[stage][subject][grade];
     const idx = units.indexOf(unitTitle);
@@ -299,10 +400,6 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
   let selected = null;
   let answers = [];
   let startTime = Date.now();
-  
-  // ⑧ 効果音用
-  const soundCorrect = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
-  const soundWrong = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
 
   function draw() {
     if (currentQ >= questions.length) {
@@ -367,7 +464,6 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
                 if (i === q.a) cls += " correct";
                 else if (i === selected) cls += " wrong";
               }
-              // ⑤ 括弧や記号を一切使わない
               const cleanOpt = String(opt).replace(/[()（）「」『』、,\.\s]/g, '');
               return `<button class="${cls}" onclick="window._sel(${i})" ${selected!==null?"disabled":""}>${esc(cleanOpt)}</button>`;
             }).join("")}
@@ -393,25 +489,21 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       selected = i;
       answers[currentQ] = (i === q.a);
       
-      // ⑧ 効果音（Web Audio APIを使用してシンプルな音を生成）
       try {
         const actx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = actx.createOscillator();
         const gain = actx.createGain();
         osc.connect(gain);
         gain.connect(actx.destination);
-        if (i === q.a) {
-          osc.frequency.value = 880; // ピーン（正解）
-        } else {
-          osc.frequency.value = 220; // ブー（不正解）
-        }
+        if (i === q.a) osc.frequency.value = 880;
+        else osc.frequency.value = 220;
         gain.gain.setValueAtTime(0.1, actx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.3);
         osc.start();
         osc.stop(actx.currentTime + 0.3);
       } catch(e) {}
       
-      draw(); // ボタンの色を変えるため再描画
+      draw();
     };
     
     window._nextQ = () => {
@@ -465,7 +557,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
 };
 
 /* =========================================================================
-   メモ（手書きキャンバス）機能 (④ 消しゴム修正)
+   6. メモ（手書きキャンバス）機能
    ========================================================================= */
 let canvas, ctx, isDrawing = false, currentTool = 'pen';
 let strokes = [], currentStroke = [], redoStack = [];
@@ -491,7 +583,6 @@ function startDrawing(e){
   isDrawing=true; const pos=getPos(e);
   currentStroke=[{x:pos.x,y:pos.y,tool:currentTool}];
   ctx.beginPath(); ctx.moveTo(pos.x,pos.y);
-  // ④ 消しゴムの色を背景色にする
   if(currentTool==='eraser'){ 
     ctx.globalCompositeOperation = 'destination-out';
     ctx.lineWidth=24; 
@@ -543,11 +634,11 @@ function redrawCanvas(){
     }
     stroke.forEach(p=>ctx.lineTo(p.x,p.y)); ctx.stroke();
   });
-  ctx.globalCompositeOperation = 'source-over'; // 元に戻す
+  ctx.globalCompositeOperation = 'source-over';
 }
 
 /* =========================================================================
-   ③ 記録画面（グラフ色分け）
+   7. 記録画面
    ========================================================================= */
 window.renderRecordPage = () => {
   const sessions = getSessions();
@@ -556,14 +647,13 @@ window.renderRecordPage = () => {
   const s = streak();
   const total = totalMinutes();
 
-  // ③ 科目ごとの色を判定する関数
   function getSubjectColor(label) {
-    if (label.includes("算数") || label.includes("数学")) return "var(--accent)"; // 青
-    if (label.includes("理科")) return "var(--green)"; // 緑
-    if (label.includes("社会")) return "var(--yellow)"; // 黄
-    if (label.includes("国語") || label.includes("漢字")) return "var(--red)"; // 赤
-    if (label.includes("英語")) return "#fd7e14"; // オレンジ
-    return "var(--text-muted)";
+    if (label.includes("算数") || label.includes("数学")) return "#228be6";
+    if (label.includes("理科")) return "#40c057";
+    if (label.includes("社会")) return "#fab005";
+    if (label.includes("国語") || label.includes("漢字")) return "#fa5252";
+    if (label.includes("英語")) return "#fd7e14";
+    return "#adb5bd";
   }
 
   const week = [];
@@ -574,7 +664,6 @@ window.renderRecordPage = () => {
     const dayNames = ["日","月","火","水","木","金","土"];
     const dow = dayNames[new Date(d).getDay()];
     
-    // その日のセッションを科目ごとに集計
     const subjectMinutes = {};
     daySessions.forEach(ses => {
       const color = getSubjectColor(ses.label);
@@ -676,7 +765,7 @@ window.renderRecordPage = () => {
 };
 
 /* =========================================================================
-   プロフィール・認証（変更なし）
+   8. プロフィール・認証
    ========================================================================= */
 window.renderProfilePage = () => {
   const user = getCurrentUser();
@@ -806,6 +895,9 @@ window.closeModal = () => {
   if (overlay) overlay.classList.remove("open");
 };
 
+/* =========================================================================
+   9. 初期化
+   ========================================================================= */
 renderAuthButtons();
 renderSidebarFooter();
 window.navigateTo("home");
