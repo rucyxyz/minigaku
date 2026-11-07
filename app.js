@@ -510,7 +510,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       overlay.innerHTML = `
         <div class="memo-modal" id="memo-window">
           <div class="memo-grabber" id="memo-grabber"></div>
-          <div class="memo-header" id="memo-drag-handle">
+          <div class="memo-header">
             <div class="memo-title">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
               メモ
@@ -541,54 +541,59 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
       window._initCanvas();
       
       const modal = document.getElementById("memo-window");
-      const dragHandle = document.getElementById("memo-drag-handle");
       const grabber = document.getElementById("memo-grabber");
-      let isDragging = false, startX, startY, startLeft, startTop;
       
-      modal.style.left = (window.innerWidth - 700) / 2 + 'px'; 
-      modal.style.top = (window.innerHeight - 500) / 2 + 'px'; 
+      const initialLeft = (window.innerWidth - 700) / 2;
+      const initialTop = (window.innerHeight - 500) / 2;
+      modal.style.left = initialLeft + 'px';
+      modal.style.top = initialTop + 'px';
       modal.style.transform = 'none';
 
-      dragHandle.addEventListener("mousedown", (e) => {
-        isDragging = true;
-        startX = e.clientX; startY = e.clientY;
-        startLeft = modal.offsetLeft; startTop = modal.offsetTop;
+      let isMoving = false, moveStartX, moveStartY, moveStartLeft, moveStartTop;
+      let isResizing = false, resizeStartY, resizeStartTop, resizeStartHeight;
+
+      modal.addEventListener("mousedown", (e) => {
+        if (e.target.closest('.memo-grabber')) return;
+        isMoving = true;
+        moveStartX = e.clientX; moveStartY = e.clientY;
+        moveStartLeft = modal.offsetLeft; moveStartTop = modal.offsetTop;
         document.body.style.userSelect = 'none';
       });
-      
-      grabber.addEventListener("mousedown", (e) => {
-        isDragging = true;
-        startX = e.clientX; startY = e.clientY;
-        startLeft = modal.offsetLeft; startTop = modal.offsetTop;
-        const startHeight = modal.offsetHeight;
-        document.body.style.userSelect = 'none';
 
-        const onMouseMoveResize = (ev) => {
-          if (!isDragging) return;
-          const newHeight = startHeight + (ev.clientY - startY);
-          if (newHeight > 200) {
-            modal.style.height = newHeight + 'px';
-            resizeCanvas();
-          }
-        };
-        const onMouseUpResize = () => {
-          isDragging = false;
-          document.body.style.userSelect = '';
-          document.removeEventListener("mousemove", onMouseMoveResize);
-          document.removeEventListener("mouseup", onMouseUpResize);
-        };
-        document.addEventListener("mousemove", onMouseMoveResize);
-        document.addEventListener("mouseup", onMouseUpResize);
+      grabber.addEventListener("mousedown", (e) => {
+        e.stopPropagation();
+        isResizing = true;
+        resizeStartY = e.clientY;
+        resizeStartTop = modal.offsetTop;
+        resizeStartHeight = modal.offsetHeight;
+        document.body.style.userSelect = 'none';
       });
 
       document.addEventListener("mousemove", (e) => {
-        if (!isDragging) return;
-        if (e.target === grabber || modal.style.height) return;
-        modal.style.left = (startLeft + e.clientX - startX) + 'px';
-        modal.style.top = (startTop + e.clientY - startY) + 'px';
+        if (isMoving) {
+          modal.style.left = (moveStartLeft + e.clientX - moveStartX) + 'px';
+          modal.style.top = (moveStartTop + e.clientY - moveStartY) + 'px';
+        }
+        if (isResizing) {
+          const diffY = e.clientY - resizeStartY;
+          let newTop = resizeStartTop + diffY;
+          let newHeight = resizeStartHeight - diffY;
+          
+          if (newHeight < 200) {
+            newHeight = 200;
+            newTop = resizeStartTop + (resizeStartHeight - 200);
+          }
+
+          modal.style.top = newTop + 'px';
+          modal.style.height = newHeight + 'px';
+          
+          resizeCanvas();
+        }
       });
+
       document.addEventListener("mouseup", () => {
-        isDragging = false;
+        isMoving = false;
+        isResizing = false;
         document.body.style.userSelect = '';
       });
     };
@@ -608,8 +613,7 @@ let strokes = [], currentStroke = [], redoStack = [];
 window._initCanvas = () => {
   canvas = document.getElementById("memo-canvas");
   ctx = canvas.getContext("2d");
-  const rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = rect.width; canvas.height = rect.height;
+  resizeCanvas();
   ctx.lineCap = "round"; ctx.lineJoin = "round";
   
   const savedStrokes = load(KEYS.MEMO, []);
@@ -626,6 +630,7 @@ window._initCanvas = () => {
 };
 
 function resizeCanvas() {
+  if (!canvas) return;
   const wrap = canvas.parentElement;
   const rect = wrap.getBoundingClientRect();
   const tempStrokes = [...strokes];
