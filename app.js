@@ -587,7 +587,7 @@ window.renderQuizPage = (unitTitle, subject, stage, grade) => {
           modal.style.top = newTop + 'px';
           modal.style.height = newHeight + 'px';
           
-          resizeCanvas();
+          if (typeof resizeCanvas === "function") resizeCanvas();
         }
       });
 
